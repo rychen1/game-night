@@ -583,16 +583,6 @@ export function CrewScreen({
                 </>
               }
               reviewHeading="Mission summary"
-              footer={
-                <GameOverActions
-                  playerId={playerId}
-                  players={room.players}
-                  isHost={isHost}
-                  onSetReady={onSetReady}
-                  onPlayAgain={onPlayAgain}
-                  onReturnToLobby={onReturnToLobby}
-                />
-              }
             >
               <div className="crew-review__section">
                 <h3 className="crew-section-title">Tasks</h3>
@@ -689,11 +679,24 @@ export function CrewScreen({
           </SectionPanel>
         ) : null}
 
+        {game.phase === "RESULTS" || game.phase === "ABORTED" ? (
+          <SectionPanel aria-label="Players" emphasis>
+            <GameOverActions
+              gameId="crew"
+              playerId={playerId}
+              players={room.players}
+              isHost={isHost}
+              onSetReady={onSetReady}
+              onPlayAgain={onPlayAgain}
+              onReturnToLobby={onReturnToLobby}
+            />
+          </SectionPanel>
+        ) : null}
+
         <SectionPanel aria-label="Room">
           <GamePlayerList
             players={room.players}
             playerId={playerId}
-            showReady={game.phase === "RESULTS" || game.phase === "ABORTED"}
             renderExtraTags={(player) =>
               game.currentPlayerId === player.id && isPlaying ? (
                 <em>turn</em>

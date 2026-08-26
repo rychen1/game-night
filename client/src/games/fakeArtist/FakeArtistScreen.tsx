@@ -259,16 +259,6 @@ export function FakeArtistScreen({
                 </>
               }
               reviewHeading="Review"
-              footer={
-                <GameOverActions
-                  playerId={playerId}
-                  players={room.players}
-                  isHost={isHost}
-                  onSetReady={onSetReady}
-                  onPlayAgain={onPlayAgain}
-                  onReturnToLobby={onReturnToLobby}
-                />
-              }
             >
               <div className="fake-artist-review__section">
                 <h3 className="fake-artist-review__section-title">
@@ -329,11 +319,24 @@ export function FakeArtistScreen({
           </SectionPanel>
         ) : null}
 
+        {game.phase === "RESULTS" || game.phase === "ABORTED" ? (
+          <SectionPanel aria-label="Players" emphasis>
+            <GameOverActions
+              gameId="fakeArtist"
+              playerId={playerId}
+              players={room.players}
+              isHost={isHost}
+              onSetReady={onSetReady}
+              onPlayAgain={onPlayAgain}
+              onReturnToLobby={onReturnToLobby}
+            />
+          </SectionPanel>
+        ) : null}
+
         <SectionPanel aria-label="Room">
           <GamePlayerList
             players={room.players}
             playerId={playerId}
-            showReady={game.phase === "RESULTS" || game.phase === "ABORTED"}
             renderExtraTags={(player) => (
               <>
                 {game.currentPlayerId === player.id &&

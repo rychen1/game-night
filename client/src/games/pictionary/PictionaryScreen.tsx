@@ -209,16 +209,6 @@ export function PictionaryScreen({
               className="pictionary-review"
               heading="Game complete"
               outcome={<p>The game was aborted because a player left.</p>}
-              footer={
-                <GameOverActions
-                  playerId={playerId}
-                  players={room.players}
-                  isHost={isHost}
-                  onSetReady={onSetReady}
-                  onPlayAgain={onPlayAgain}
-                  onReturnToLobby={onReturnToLobby}
-                />
-              }
             />
           </SectionPanel>
         ) : null}
@@ -234,16 +224,6 @@ export function PictionaryScreen({
                 </p>
               }
               reviewHeading="Review"
-              footer={
-                <GameOverActions
-                  playerId={playerId}
-                  players={room.players}
-                  isHost={isHost}
-                  onSetReady={onSetReady}
-                  onPlayAgain={onPlayAgain}
-                  onReturnToLobby={onReturnToLobby}
-                />
-              }
             >
               <div className="pictionary-review__gallery">
                 {game.history.map((round, index) => (
@@ -291,16 +271,20 @@ export function PictionaryScreen({
               className="pictionary-review"
               heading="Game complete"
               outcome={<p>The round is over.</p>}
-              footer={
-                <GameOverActions
-                  playerId={playerId}
-                  players={room.players}
-                  isHost={isHost}
-                  onSetReady={onSetReady}
-                  onPlayAgain={onPlayAgain}
-                  onReturnToLobby={onReturnToLobby}
-                />
-              }
+            />
+          </SectionPanel>
+        ) : null}
+
+        {game.phase === "RESULTS" || game.phase === "ABORTED" ? (
+          <SectionPanel aria-label="Players" emphasis>
+            <GameOverActions
+              gameId="pictionary"
+              playerId={playerId}
+              players={room.players}
+              isHost={isHost}
+              onSetReady={onSetReady}
+              onPlayAgain={onPlayAgain}
+              onReturnToLobby={onReturnToLobby}
             />
           </SectionPanel>
         ) : null}
@@ -309,7 +293,6 @@ export function PictionaryScreen({
           <GamePlayerList
             players={room.players}
             playerId={playerId}
-            showReady={game.phase === "RESULTS" || game.phase === "ABORTED"}
             renderExtraTags={(player) =>
               game.drawerId === player.id && game.phase === "DRAWING" ? (
                 <em>drawing</em>

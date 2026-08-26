@@ -1,7 +1,9 @@
-import type { PublicPlayer } from "../network/messages.ts";
-import { RoomReadyControls } from "./RoomReadyControls.tsx";
+import type { GameId, PublicPlayer } from "../network/messages.ts";
+import { gameCatalogEntry } from "../games/catalog.ts";
+import { RoomPlayersSection } from "./RoomPlayersSection.tsx";
 
 type GameOverActionsProps = {
+  gameId: GameId;
   playerId: string;
   players: PublicPlayer[];
   isHost: boolean;
@@ -12,6 +14,7 @@ type GameOverActionsProps = {
 
 /** Shared Play Again readiness + host Return to Lobby (all games). */
 export function GameOverActions({
+  gameId,
   playerId,
   players,
   isHost,
@@ -19,16 +22,25 @@ export function GameOverActions({
   onPlayAgain,
   onReturnToLobby,
 }: GameOverActionsProps) {
+  const { minPlayers, maxPlayers } = gameCatalogEntry(gameId);
+  const seatedCount = players.length;
+  const inRange = seatedCount >= minPlayers && seatedCount <= maxPlayers;
+
   return (
-    <RoomReadyControls
-      playerId={playerId}
+    <RoomPlayersSection
       players={players}
-      isHost={isHost}
-      proceedLabel="Play Again"
-      onSetReady={onSetReady}
-      onProceed={onPlayAgain}
-      secondaryLabel="Return to lobby"
-      onSecondary={onReturnToLobby}
+      playerId={playerId}
+      minPlayers={minPlayers}
+      maxPlayers={maxPlayers}
+      readiness={{
+        isHost,
+        canStart: inRange,
+        proceedLabel: "Play Again",
+        onSetReady,
+        onProceed: onPlayAgain,
+        secondaryLabel: "Return to lobby",
+        onSecondary: onReturnToLobby,
+      }}
     />
   );
 }

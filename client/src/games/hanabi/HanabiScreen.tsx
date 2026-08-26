@@ -543,16 +543,6 @@ export function HanabiScreen({
                   : undefined
               }
               reviewHeading="Review"
-              footer={
-                <GameOverActions
-                  playerId={playerId}
-                  players={room.players}
-                  isHost={isHost}
-                  onSetReady={onSetReady}
-                  onPlayAgain={onPlayAgain}
-                  onReturnToLobby={onReturnToLobby}
-                />
-              }
             >
               <div className="hanabi-review__section">
                 <h3 className="hanabi-section-title">Final stacks</h3>
@@ -650,11 +640,24 @@ export function HanabiScreen({
           </SectionPanel>
         ) : null}
 
+        {game.phase === "RESULTS" || game.phase === "ABORTED" ? (
+          <SectionPanel aria-label="Players" emphasis>
+            <GameOverActions
+              gameId="hanabi"
+              playerId={playerId}
+              players={room.players}
+              isHost={isHost}
+              onSetReady={onSetReady}
+              onPlayAgain={onPlayAgain}
+              onReturnToLobby={onReturnToLobby}
+            />
+          </SectionPanel>
+        ) : null}
+
         <SectionPanel aria-label="Room">
           <GamePlayerList
             players={room.players}
             playerId={playerId}
-            showReady={game.phase === "RESULTS" || game.phase === "ABORTED"}
             renderExtraTags={(player) =>
               game.currentPlayerId === player.id && game.phase === "PLAYING" ? (
                 <em>turn</em>

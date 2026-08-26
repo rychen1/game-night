@@ -44,8 +44,8 @@ export function HomeScreen({
         <h1>Game Night</h1>
         <p className="home-tagline">Games for a table full of friends.</p>
         <p className="home-beta-notice">
-          Beta project · Not monetized · Fan project &amp; lab for testing new
-          game ideas
+          Work in progress · Not monetized · Fan project &amp; lab for exploring
+          and testing new game ideas
         </p>
       </header>
 

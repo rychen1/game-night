@@ -221,16 +221,6 @@ export function TelestrationsScreen({
               className="telestrations-review"
               heading="Game complete"
               outcome={<p>The round was aborted because a player left.</p>}
-              footer={
-                <GameOverActions
-                  playerId={playerId}
-                  players={room.players}
-                  isHost={isHost}
-                  onSetReady={onSetReady}
-                  onPlayAgain={onPlayAgain}
-                  onReturnToLobby={onReturnToLobby}
-                />
-              }
             />
           </SectionPanel>
         ) : null}
@@ -247,16 +237,6 @@ export function TelestrationsScreen({
                 </p>
               }
               reviewHeading="Review"
-              footer={
-                <GameOverActions
-                  playerId={playerId}
-                  players={room.players}
-                  isHost={isHost}
-                  onSetReady={onSetReady}
-                  onPlayAgain={onPlayAgain}
-                  onReturnToLobby={onReturnToLobby}
-                />
-              }
             >
               <div className="telestrations-review__gallery">
                 {game.books.map((book) => (
@@ -312,16 +292,20 @@ export function TelestrationsScreen({
               className="telestrations-review"
               heading="Game complete"
               outcome={<p>The round is over.</p>}
-              footer={
-                <GameOverActions
-                  playerId={playerId}
-                  players={room.players}
-                  isHost={isHost}
-                  onSetReady={onSetReady}
-                  onPlayAgain={onPlayAgain}
-                  onReturnToLobby={onReturnToLobby}
-                />
-              }
+            />
+          </SectionPanel>
+        ) : null}
+
+        {game.phase === "REVEAL" || game.phase === "ABORTED" ? (
+          <SectionPanel aria-label="Players" emphasis>
+            <GameOverActions
+              gameId="telestrations"
+              playerId={playerId}
+              players={room.players}
+              isHost={isHost}
+              onSetReady={onSetReady}
+              onPlayAgain={onPlayAgain}
+              onReturnToLobby={onReturnToLobby}
             />
           </SectionPanel>
         ) : null}
@@ -330,7 +314,6 @@ export function TelestrationsScreen({
           <GamePlayerList
             players={room.players}
             playerId={playerId}
-            showReady={game.phase === "REVEAL" || game.phase === "ABORTED"}
             renderExtraTags={(player) =>
               game.submittedPlayerIds.includes(player.id) ? (
                 <em>submitted</em>
