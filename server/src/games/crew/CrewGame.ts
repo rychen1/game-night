@@ -24,7 +24,7 @@ import {
 import {
   evaluateTasks,
   markUndealtCardOutcomes,
-  missionResultFromTasks,
+  missionResultIfFullyDecided,
   pickStarterMission,
   resolveTasks,
   type CrewMissionDef,
@@ -241,7 +241,7 @@ export class CrewGame implements Game {
     if (!this.hands.has(playerId)) {
       throw new GameError("You are not in this game");
     }
-    const decided = missionResultFromTasks(this.tasks);
+    const decided = missionResultIfFullyDecided(this.tasks);
     if (decided) {
       this.phase = "RESULTS";
       this.endReason = decided;

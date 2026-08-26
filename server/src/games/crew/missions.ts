@@ -201,6 +201,19 @@ export function missionResultFromTasks(
   return null;
 }
 
+/** Mission-start check: resolve only when every task is terminal (no pending). */
+export function missionResultIfFullyDecided(
+  tasks: ResolvedTask[],
+): "success" | "failure" | null {
+  if (tasks.length === 0 || tasks.some((t) => t.status === "pending")) {
+    return null;
+  }
+  if (tasks.every((t) => t.status === "satisfied")) {
+    return "success";
+  }
+  return "failure";
+}
+
 /**
  * Update task statuses after a trick resolves.
  * Returns whether the mission should end, and if so with which result.

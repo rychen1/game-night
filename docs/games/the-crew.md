@@ -42,10 +42,14 @@ official campaign ruleset.
 1. Deal from a 40-card deck (suits red/blue/green/yellow ranks 1–9; submarine
    trump 1–4). Hand sizes depend on player count; some cards remain undealt.
 2. Pick a random starter mission; assign tasks; mark outcomes for undealt
-   target cards where applicable.
+   target cards where applicable (`player_wins_card` on an undealt card →
+   `failed`; `player_must_not_win` on an undealt card → `satisfied`).
 3. **TASKS** phase: review briefing; any seated player may `crew_begin_mission`.
-   If tasks are already fully decided by undealt outcomes, game may end
-   immediately.
+   If **every** task is already terminal (no `pending` remain), the mission
+   may end immediately in **RESULTS** (all `satisfied` → success; any
+   `failed` → failure). If at least one task is still `pending`, play
+   proceeds to **PLAYING** even when other tasks are already `failed` or
+   `satisfied`.
 4. **PLAYING**: follow-suit tricks; submarine is trump; winner leads next.
 5. Communication: at most **one** per player per mission, only during
    `PLAYING`, using legal `communicableOptions` (highest/lowest/only ×
@@ -63,7 +67,7 @@ Task kinds in starter missions include `player_wins_card` and
 ```text
 TASKS → PLAYING → RESULTS
                ↘ ABORTED
-     ↘ RESULTS (immediate, if tasks already decided)
+     ↘ RESULTS (immediate, if all tasks terminal — no pending)
 ```
 
 | Phase | Meaning |
