@@ -42,8 +42,9 @@ Fake Artist may still win by guessing the title.
 3. Drawing: two full passes over the turn order (`round` 1–2). Current player
    submits one stroke per turn.
 4. Voting: each player votes for exactly one other player.
-5. If a unique majority correctly names the Fake Artist → **GUESS** phase for
-   the Fake Artist; otherwise Fake Artist wins immediately.
+5. If a unique plurality correctly names the Fake Artist → **GUESS** phase for
+   the Fake Artist; otherwise Fake Artist wins immediately. (Plurality = most
+   votes; ties for the lead do not count as unique.)
 6. Guess: correct title → artists win; incorrect → Fake Artist wins.
 
 Stroke points are normalized roughly to `[0,1]` with a per-stroke point cap.
@@ -183,4 +184,6 @@ Standard only: `{ kind: "fakeArtist" }`. No setup fields.
 
 - Prompt pool: small categorized word list on server (`words.ts`)
 - Do not leak `word` or vote targets before RESULTS
+- `guess_word` outcome: correct title → `winner: "artists"`; incorrect →
+  `winner: "fakeArtist"`
 - Shared canvas for review as well as play

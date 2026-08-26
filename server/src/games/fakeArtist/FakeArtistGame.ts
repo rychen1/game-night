@@ -262,7 +262,7 @@ export class FakeArtistGame implements Game {
       throw new GameError("Guess cannot be empty");
     }
     this.winner =
-      guessed === normalizeWord(this.word) ? "fakeArtist" : "artists";
+      guessed === normalizeWord(this.word) ? "artists" : "fakeArtist";
     this.phase = "RESULTS";
     this.endsAt = null;
   }
