@@ -20,6 +20,8 @@ import { hashPassword, verifyPassword } from "./passwords.ts";
 import type { Room } from "./Room.ts";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const ROOM_NOT_FOUND = "Room does not exist";
+const INCORRECT_PASSWORD = "Incorrect password";
 const JOIN_FAILED = "Could not join room";
 
 export class RoomError extends Error {
@@ -86,7 +88,7 @@ export class RoomManager {
   ): { player: Player; room: Room } {
     const room = this.roomsByCode.get(roomCode);
     if (!room) {
-      throw new RoomError(JOIN_FAILED);
+      throw new RoomError(ROOM_NOT_FOUND);
     }
     if (room.phase !== "LOBBY") {
       throw new RoomError("This room has already started a game");
@@ -103,7 +105,7 @@ export class RoomManager {
         throw new RoomError("Password required");
       }
       if (!verifyPassword(password, room.passwordHash)) {
-        throw new RoomError(JOIN_FAILED);
+        throw new RoomError(INCORRECT_PASSWORD);
       }
     }
     const player = createPlayer(name, room.code);
