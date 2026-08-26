@@ -46,6 +46,10 @@ export function HomeScreen({
         <p className="home-games">
           Pictionary · Telestrations · Fake Artist · Hanabi · The Crew
         </p>
+        <p className="home-beta-notice">
+          Beta project · Not monetized · Fan project &amp; lab for testing new
+          game ideas
+        </p>
       </header>
 
       <GamePickerGrid
