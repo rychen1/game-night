@@ -13,9 +13,11 @@ import type {
 import {
   clearReconnectToken,
   connectSocket,
+  loadReconnectRoomCode,
   loadReconnectToken,
   loadSavedName,
   saveName,
+  saveReconnectRoomCode,
   saveReconnectToken,
 } from "./network/socket.ts";
 import { CrewScreen } from "./games/crew/CrewScreen.tsx";
@@ -36,6 +38,11 @@ import {
   parseRoomShareLocation,
   parseRoomShareUrl,
 } from "./room/roomShare.ts";
+import {
+  isReconnectFailureMessage,
+  pendingShareCodeAfterEdit,
+  resolveSessionStartup,
+} from "./room/sessionStartup.ts";
 import "./App.css";
 
 type SocketHandle = {
@@ -58,10 +65,16 @@ function readInitialShareCode(): string | null {
 /** Captured once at module load so share codes survive URL cleanup / remounts. */
 const INITIAL_SHARE_CODE = readInitialShareCode();
 
+const SESSION_STARTUP = resolveSessionStartup({
+  shareCode: INITIAL_SHARE_CODE,
+  reconnectToken: loadReconnectToken(),
+  reconnectRoomCode: loadReconnectRoomCode(),
+});
+
 function App() {
   const socketRef = useRef<SocketHandle | null>(null);
   const pendingGameIdRef = useRef<GameId | null>(null);
-  const reconnectPendingRef = useRef(loadReconnectToken() !== null);
+  const reconnectPendingRef = useRef(SESSION_STARTUP.shouldReconnect);
   const autoJoinAttemptedRef = useRef(false);
   const [connected, setConnected] = useState(false);
   const [socketEverOpened, setSocketEverOpened] = useState(false);
@@ -90,9 +103,16 @@ function App() {
       onOpen() {
         setConnected(true);
         setSocketEverOpened(true);
-        const token = loadReconnectToken();
-        if (token) {
-          socket.send({ type: "reconnect", reconnectToken: token });
+        if (SESSION_STARTUP.discardReconnectSession) {
+          clearReconnectToken();
+        }
+        if (SESSION_STARTUP.shouldReconnect) {
+          const token = loadReconnectToken();
+          if (token) {
+            socket.send({ type: "reconnect", reconnectToken: token });
+          } else {
+            reconnectPendingRef.current = false;
+          }
         } else {
           reconnectPendingRef.current = false;
         }
@@ -141,6 +161,9 @@ function App() {
         setPendingShareCode(null);
         clearRoomShareLocation();
         saveReconnectToken(message.reconnectToken);
+        if (message.type === "room_created") {
+          saveReconnectRoomCode(message.roomCode);
+        }
         setPlayerId(message.playerId);
         setHomeView("home");
         setCreateGameId(null);
@@ -156,6 +179,7 @@ function App() {
         return;
       case "room_state":
         setRoom(message.state);
+        saveReconnectRoomCode(message.state.roomCode);
         setError(null);
         setExitNotice(null);
         if (message.state.phase === "LOBBY") {
@@ -186,7 +210,10 @@ function App() {
         setError(null);
         return;
       case "error":
-        if (message.message === "Unknown reconnect token") {
+        if (
+          reconnectPendingRef.current &&
+          isReconnectFailureMessage(message.message)
+        ) {
           clearReconnectToken();
           reconnectPendingRef.current = false;
         }
@@ -448,7 +475,9 @@ function App() {
         onNameChange={handleNameChange}
         onJoinCodeChange={(code) => {
           setJoinCode(code);
-          setPendingShareCode(null);
+          setPendingShareCode((pending) =>
+            pendingShareCodeAfterEdit(pending, code),
+          );
           setShowJoinPassword(false);
           setJoinPassword("");
         }}

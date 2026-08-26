@@ -1,18 +1,28 @@
 import type { ClientMessage, ServerMessage } from "./messages.ts";
 
 const TOKEN_KEY = "game-night.reconnectToken";
+const ROOM_CODE_KEY = "game-night.reconnectRoomCode";
 const NAME_KEY = "game-night.name";
 
 export function loadReconnectToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
+export function loadReconnectRoomCode(): string | null {
+  return localStorage.getItem(ROOM_CODE_KEY);
+}
+
 export function saveReconnectToken(token: string): void {
   localStorage.setItem(TOKEN_KEY, token);
 }
 
+export function saveReconnectRoomCode(roomCode: string): void {
+  localStorage.setItem(ROOM_CODE_KEY, roomCode);
+}
+
 export function clearReconnectToken(): void {
   localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(ROOM_CODE_KEY);
 }
 
 export function loadSavedName(): string {

@@ -1,4 +1,3 @@
-import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 import type { GameId } from "../network/messages.ts";
 import { ActionFeedback } from "../components/ActionFeedback.tsx";
 import { GamePickerGrid } from "../components/GamePickerGrid.tsx";
@@ -19,40 +18,6 @@ type HomeScreenProps = {
   onBrowseRooms: () => void;
 };
 
-/** Sync browser autofill into React state when the DOM value diverges. */
-function useAutofillSync(
-  ref: RefObject<HTMLInputElement | null>,
-  value: string,
-  onChange: (next: string) => void,
-): void {
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (el !== null && el.value !== value) {
-      onChange(el.value);
-    }
-  });
-
-  useEffect(() => {
-    const el = ref.current;
-    if (el === null) {
-      return;
-    }
-    const sync = (): void => {
-      if (el.value !== value) {
-        onChange(el.value);
-      }
-    };
-    el.addEventListener("input", sync);
-    el.addEventListener("change", sync);
-    const timer = window.setTimeout(sync, 250);
-    return () => {
-      el.removeEventListener("input", sync);
-      el.removeEventListener("change", sync);
-      window.clearTimeout(timer);
-    };
-  }, [value, onChange]);
-}
-
 export function HomeScreen({
   name,
   joinCode,
@@ -67,12 +32,6 @@ export function HomeScreen({
   onJoin,
   onBrowseRooms,
 }: HomeScreenProps) {
-  const nameRef = useRef<HTMLInputElement>(null);
-  const joinCodeRef = useRef<HTMLInputElement>(null);
-
-  useAutofillSync(nameRef, name, onNameChange);
-  useAutofillSync(joinCodeRef, joinCode, onJoinCodeChange);
-
   const ready = connected && name.trim().length > 0;
   const canJoin =
     ready &&
@@ -103,10 +62,8 @@ export function HomeScreen({
         <label>
           Your name
           <input
-            ref={nameRef}
             value={name}
             onChange={(event) => onNameChange(event.target.value)}
-            onInput={(event) => onNameChange(event.currentTarget.value)}
             maxLength={32}
             autoComplete="nickname"
           />
@@ -116,10 +73,8 @@ export function HomeScreen({
           <label>
             Room code
             <input
-              ref={joinCodeRef}
               value={joinCode}
               onChange={(event) => onJoinCodeChange(event.target.value)}
-              onInput={(event) => onJoinCodeChange(event.currentTarget.value)}
               maxLength={4}
               placeholder="7K4P"
               autoCapitalize="characters"
@@ -138,9 +93,6 @@ export function HomeScreen({
               type="password"
               value={joinPassword}
               onChange={(event) => onJoinPasswordChange(event.target.value)}
-              onInput={(event) =>
-                onJoinPasswordChange(event.currentTarget.value)
-              }
               maxLength={64}
               autoComplete="current-password"
             />

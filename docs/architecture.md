@@ -230,11 +230,18 @@ the same join flow.
 Opening a share link:
 
 1. Loads the SPA home screen with the room code pre-filled
-2. If the visitor already has a saved display name (and no successful
-   reconnect to another session), the client sends `join_room` automatically
-3. Private rooms still require the room password on the home join form — the
+2. If the visitor already has a saved display name and the share link targets a
+   **different** room than the saved reconnect session, the client **discards**
+   the stale session and joins the shared room instead of reconnecting to the
+   old one
+3. If the share link targets the **same** room as the saved reconnect session,
+   the client reconnects normally so the user does not create a duplicate seat
+4. If there is no share link, normal reconnect behavior applies
+5. If the visitor has a saved display name and no blocking reconnect session,
+   the client sends `join_room` automatically
+6. Private rooms still require the room password on the home join form — the
    share link does not embed passwords
-4. After a successful join or reconnect, share query/path parameters are
+7. After a successful join or reconnect, share query/path parameters are
    removed from the browser URL (`history.replaceState`) without leaving the
    session
 
