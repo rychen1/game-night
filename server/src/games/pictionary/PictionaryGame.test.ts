@@ -298,9 +298,24 @@ describe("PictionaryGame timer and round transitions", () => {
     assert.notEqual(results.history?.[0]?.skipped, true);
     assert.equal(results.history?.[1]?.drawerId, P2);
     assert.equal(results.history?.[1]?.skipped, true);
-    assert.equal(results.history?.[1]?.strokes.length, 0);
     assert.equal(results.history?.[2]?.drawerId, P3);
     assert.notEqual(results.history?.[2]?.skipped, true);
+  });
+
+  it("preserves partial drawings when a timed-out round is recorded", () => {
+    const game = new PictionaryGame();
+    setupFixedQueue(game, [P1, P2, P3]);
+    setWord(game, "Castle");
+    game.performAction(P1, { type: "submit_stroke", points: stroke() });
+    setDeadline(game, Date.now() - 1);
+
+    game.onTimer();
+
+    const skipped = asInternals(game).history[0];
+    assert.equal(skipped?.skipped, true);
+    assert.equal(skipped?.strokes.length, 1);
+    assert.equal(game.getPublicState().phase, "DRAWING");
+    assert.equal(game.getPublicState().drawerId, P2);
   });
 
   it("enters RESULTS after the final correct guess", () => {

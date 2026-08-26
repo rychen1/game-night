@@ -20,13 +20,10 @@ import { TurnStatus } from "../../components/TurnStatus.tsx";
 
 type PictionaryScreenProps = {
   playerId: string;
-  name: string;
   room: RoomStatePayload;
   game: PictionaryPublicState;
   privateState: PictionaryPrivateState | null;
   error: string | null;
-  onNameChange: (name: string) => void;
-  onSetName: () => void;
   onLeaveRoom: () => void;
   onReturnToLobby: () => void;
   onPlayAgain: () => void;
@@ -40,13 +37,10 @@ function playerName(players: PublicPlayer[], id: string): string {
 
 export function PictionaryScreen({
   playerId,
-  name,
   room,
   game,
   privateState,
   error,
-  onNameChange,
-  onSetName,
   onLeaveRoom,
   onReturnToLobby,
   onPlayAgain,
@@ -304,24 +298,6 @@ export function PictionaryScreen({
               }
             />
           ) : null}
-
-          <form
-            className="inline"
-            onSubmit={(event) => {
-              event.preventDefault();
-              onSetName();
-            }}
-          >
-            <label>
-              Display name
-              <input
-                value={name}
-                onChange={(event) => onNameChange(event.target.value)}
-                maxLength={32}
-              />
-            </label>
-            <button type="submit">Update name</button>
-          </form>
 
           <ActionFeedback message={error} />
 

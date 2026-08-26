@@ -21,13 +21,10 @@ import { WaitingStatus } from "../../components/WaitingStatus.tsx";
 
 type FakeArtistScreenProps = {
   playerId: string;
-  name: string;
   room: RoomStatePayload;
   game: FakeArtistPublicState;
   privateState: FakeArtistPrivateState | null;
   error: string | null;
-  onNameChange: (name: string) => void;
-  onSetName: () => void;
   onLeaveRoom: () => void;
   onReturnToLobby: () => void;
   onPlayAgain: () => void;
@@ -41,13 +38,10 @@ function playerName(players: PublicPlayer[], id: string): string {
 
 export function FakeArtistScreen({
   playerId,
-  name,
   room,
   game,
   privateState,
   error,
-  onNameChange,
-  onSetName,
   onLeaveRoom,
   onReturnToLobby,
   onPlayAgain,
@@ -352,24 +346,6 @@ export function FakeArtistScreen({
               )}
             />
           ) : null}
-
-          <form
-            className="inline"
-            onSubmit={(event) => {
-              event.preventDefault();
-              onSetName();
-            }}
-          >
-            <label>
-              Display name
-              <input
-                value={name}
-                onChange={(event) => onNameChange(event.target.value)}
-                maxLength={32}
-              />
-            </label>
-            <button type="submit">Update name</button>
-          </form>
 
           <ActionFeedback message={error} />
 

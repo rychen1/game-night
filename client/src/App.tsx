@@ -298,13 +298,10 @@ function App() {
       screen = (
         <CrewScreen
           playerId={playerId}
-          name={name}
           room={room}
           game={room.publicGame}
           privateState={privateState?.kind === "crew" ? privateState : null}
           error={error}
-          onNameChange={handleNameChange}
-          onSetName={() => send({ type: "set_name", name: name.trim() })}
           onLeaveRoom={() => send({ type: "leave_room" })}
           onReturnToLobby={() => send({ type: "return_to_lobby" })}
           onPlayAgain={() => send({ type: "play_again" })}
@@ -318,13 +315,10 @@ function App() {
       screen = (
         <HanabiScreen
           playerId={playerId}
-          name={name}
           room={room}
           game={room.publicGame}
           privateState={privateState?.kind === "hanabi" ? privateState : null}
           error={error}
-          onNameChange={handleNameChange}
-          onSetName={() => send({ type: "set_name", name: name.trim() })}
           onLeaveRoom={() => send({ type: "leave_room" })}
           onReturnToLobby={() => send({ type: "return_to_lobby" })}
           onPlayAgain={() => send({ type: "play_again" })}
@@ -338,15 +332,12 @@ function App() {
       screen = (
         <PictionaryScreen
           playerId={playerId}
-          name={name}
           room={room}
           game={room.publicGame}
           privateState={
             privateState?.kind === "pictionary" ? privateState : null
           }
           error={error}
-          onNameChange={handleNameChange}
-          onSetName={() => send({ type: "set_name", name: name.trim() })}
           onLeaveRoom={() => send({ type: "leave_room" })}
           onReturnToLobby={() => send({ type: "return_to_lobby" })}
           onPlayAgain={() => send({ type: "play_again" })}
@@ -360,15 +351,12 @@ function App() {
       screen = (
         <TelestrationsScreen
           playerId={playerId}
-          name={name}
           room={room}
           game={room.publicGame}
           privateState={
             privateState?.kind === "telestrations" ? privateState : null
           }
           error={error}
-          onNameChange={handleNameChange}
-          onSetName={() => send({ type: "set_name", name: name.trim() })}
           onLeaveRoom={() => send({ type: "leave_room" })}
           onReturnToLobby={() => send({ type: "return_to_lobby" })}
           onPlayAgain={() => send({ type: "play_again" })}
@@ -382,15 +370,12 @@ function App() {
       screen = (
         <FakeArtistScreen
           playerId={playerId}
-          name={name}
           room={room}
           game={room.publicGame}
           privateState={
             privateState?.kind === "fakeArtist" ? privateState : null
           }
           error={error}
-          onNameChange={handleNameChange}
-          onSetName={() => send({ type: "set_name", name: name.trim() })}
           onLeaveRoom={() => send({ type: "leave_room" })}
           onReturnToLobby={() => send({ type: "return_to_lobby" })}
           onPlayAgain={() => send({ type: "play_again" })}

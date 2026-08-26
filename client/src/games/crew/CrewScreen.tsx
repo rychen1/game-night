@@ -24,13 +24,10 @@ import { TurnStatus } from "../../components/TurnStatus.tsx";
 
 type CrewScreenProps = {
   playerId: string;
-  name: string;
   room: RoomStatePayload;
   game: CrewPublicState;
   privateState: CrewPrivateState | null;
   error: string | null;
-  onNameChange: (name: string) => void;
-  onSetName: () => void;
   onLeaveRoom: () => void;
   onReturnToLobby: () => void;
   onPlayAgain: () => void;
@@ -176,13 +173,10 @@ function CrewPublicFace({ card }: { card: CrewPublicCard }) {
 
 export function CrewScreen({
   playerId,
-  name,
   room,
   game,
   privateState,
   error,
-  onNameChange,
-  onSetName,
   onLeaveRoom,
   onReturnToLobby,
   onPlayAgain,
@@ -706,24 +700,6 @@ export function CrewScreen({
               }
             />
           ) : null}
-
-          <form
-            className="inline"
-            onSubmit={(event) => {
-              event.preventDefault();
-              onSetName();
-            }}
-          >
-            <label>
-              Display name
-              <input
-                value={name}
-                onChange={(event) => onNameChange(event.target.value)}
-                maxLength={32}
-              />
-            </label>
-            <button type="submit">Update name</button>
-          </form>
 
           <ActionFeedback message={error} />
 

@@ -211,7 +211,7 @@ export class PictionaryGame implements Game {
         drawerId,
         word: this.word,
         solverId: "",
-        strokes: [],
+        strokes: cloneStrokes(this.strokes),
         guesses: this.guesses.map((guess) => ({ ...guess })),
         skipped: true,
       });
