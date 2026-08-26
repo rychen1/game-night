@@ -81,15 +81,16 @@ It is not a full runbook.
 
 | Program | Dev | Production-shaped today |
 |---------|-----|-------------------------|
-| Client | `npm run dev` (Vite; proxies `/ws` → `ws://localhost:3001`) | `npm run build` → static files in `client/dist` (`preview` for local check only) |
+| Client | `npm run dev` (Vite; proxies `/ws` → `ws://localhost:3001`) | `npm run build` → static files in `client/dist` |
 | Server | `npm run dev` (`tsx watch`) | `npm start` → `tsx src/server.ts` (TypeScript via `tsx`; `tsconfig` uses `noEmit`) |
 
-There is **no** root monorepo start script and **no** Express static hosting of
-`client/dist` yet. A production deploy must either:
+**Production same-origin:** after `client` build, the Node server serves
+`client/dist` (static assets + SPA `index.html` fallback) and keeps WebSocket
+on `/ws`. Local Vite UI development is unchanged (proxy to the API only).
 
-1. Serve the Vite build and the WebSocket API under the **same public origin**
-   (reverse proxy / platform that routes `/` to static and `/ws` to Node), or
-2. Extend the server later to serve the built client itself.
+There is **no** root monorepo start script yet. A production deploy should
+build the client, then start the server (optionally behind a TLS-terminating
+reverse proxy on the same public origin).
 
 ### WebSocket URL and HTTPS / WSS
 
@@ -122,7 +123,9 @@ targets `localhost:3001`.
 ### HTTP surface today
 
 - `GET /health` → `{ ok: true }`
-- WebSocket path `/ws`
+- WebSocket path `/ws` (unchanged)
+- When `client/dist` exists: static files from that directory, plus SPA
+  fallback to `index.html` for other GET routes
 - `cors()` enabled (wide open) — primarily relevant if HTTP APIs are called
   cross-origin; gameplay is WebSocket
 

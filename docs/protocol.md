@@ -25,8 +25,10 @@ More specific documents override more general ones when they conflict.
 
 - Primary realtime channel: WebSocket JSON messages
 - Connection stays open while the player is in a session
-- Express may serve HTTP (health / static in deployment), but gameplay traffic
-  is WebSocket
+- Express serves HTTP health (`GET /health`) and, when present, the built
+  client from `client/dist` (static + SPA fallback). Gameplay traffic is
+  WebSocket on `/ws`. See
+  [`architecture.md`](./architecture.md#deployment-assumptions-current).
 - On connect, the server may assign identity; clients send typed messages;
   server replies with typed messages and broadcasts `room_state` as needed
 
