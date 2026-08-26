@@ -1,4 +1,8 @@
 import type { ClientMessage, ServerMessage } from "./messages.ts";
+import {
+  createConnectionGeneration,
+  invokeLifecycleCallback,
+} from "./socketLifecycle.ts";
 
 const TOKEN_KEY = "game-night.reconnectToken";
 const ROOM_CODE_KEY = "game-night.reconnectRoomCode";
@@ -43,14 +47,15 @@ export function connectSocket(handlers: {
   onClose: () => void;
   onMessage: (message: ServerMessage) => void;
 }): { send: (message: ClientMessage) => void; close: () => void } {
+  const connection = createConnectionGeneration();
   const ws = new WebSocket(socketUrl());
 
   ws.addEventListener("open", () => {
-    handlers.onOpen();
+    invokeLifecycleCallback(connection, handlers.onOpen);
   });
 
   ws.addEventListener("close", () => {
-    handlers.onClose();
+    invokeLifecycleCallback(connection, handlers.onClose);
   });
 
   ws.addEventListener("message", (event) => {
