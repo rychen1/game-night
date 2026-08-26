@@ -100,7 +100,8 @@ export function HomeScreen({
         <button
           type="button"
           className="secondary"
-          disabled={!connected}
+          disabled={!ready}
+          title={!name.trim() ? "Enter your name to browse rooms" : undefined}
           onClick={onBrowseRooms}
         >
           Browse rooms

@@ -350,7 +350,8 @@ After **GAME_OVER**, `RoomReadyControls` / `GameOverActions` still gates
 readiness.
 
 Room browser: public rooms only; joinable when `LOBBY` and not full; polls
-while open.
+while open. Join (and **Browse rooms** from home) require a non-empty display
+name — the server rejects join without one.
 
 ---
 

@@ -33,6 +33,23 @@ function joinDisabledReason(room: RoomListItem): string | null {
   return "Full";
 }
 
+function joinButtonLabel(
+  room: RoomListItem,
+  connected: boolean,
+  nameReady: boolean,
+): string {
+  if (!connected) {
+    return "Offline";
+  }
+  if (!nameReady) {
+    return "Enter name";
+  }
+  if (!room.joinable) {
+    return joinDisabledReason(room) ?? "Unavailable";
+  }
+  return "Join";
+}
+
 export function BrowseRoomsScreen({
   name,
   connected,
@@ -43,7 +60,8 @@ export function BrowseRoomsScreen({
   onJoinRoom,
   onBack,
 }: BrowseRoomsScreenProps) {
-  const ready = connected && name.trim().length > 0;
+  const nameReady = name.trim().length > 0;
+  const ready = connected && nameReady;
 
   useEffect(() => {
     onRefresh();
@@ -86,6 +104,7 @@ export function BrowseRoomsScreen({
           <ul className="player-list room-browser-list">
             {rooms.map((room) => {
               const reason = joinDisabledReason(room);
+              const label = joinButtonLabel(room, connected, nameReady);
               const gameLabel =
                 room.setup?.title ?? room.gameTitle ?? "Open lobby";
               return (
@@ -107,9 +126,15 @@ export function BrowseRoomsScreen({
                     type="button"
                     disabled={!ready || !room.joinable}
                     onClick={() => onJoinRoom(room.roomCode)}
-                    title={reason ?? "Join room"}
+                    title={
+                      !nameReady
+                        ? "Enter your name to join"
+                        : !connected
+                          ? "Reconnect to join"
+                          : (reason ?? "Join room")
+                    }
                   >
-                    {room.joinable ? "Join" : reason}
+                    {label}
                   </button>
                 </li>
               );
