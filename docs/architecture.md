@@ -211,6 +211,36 @@ refresh via reconnect; it is not full authentication.
 Public rooms appear in the room browser. Private rooms require a password and
 do not appear in the public list.
 
+### Share links (client)
+
+Players in the lobby can copy a **share URL** or show a **QR code** for the
+same link. This is a client-only affordance — the wire protocol is unchanged
+and still joins via `join_room` with the 4-character room code.
+
+**Canonical URL format:**
+
+```text
+https://{host}/?code=XXXX
+```
+
+`XXXX` is the existing room code (uppercase alphanumeric, 4 characters).
+The client also accepts legacy-style path links `/join/XXXX`; both resolve to
+the same join flow.
+
+Opening a share link:
+
+1. Loads the SPA home screen with the room code pre-filled
+2. If the visitor already has a saved display name (and no successful
+   reconnect to another session), the client sends `join_room` automatically
+3. Private rooms still require the room password on the home join form — the
+   share link does not embed passwords
+4. After a successful join or reconnect, share query/path parameters are
+   removed from the browser URL (`history.replaceState`) without leaving the
+   session
+
+QR codes encode the same canonical URL. No second room identity or invite
+token is introduced.
+
 Capacity and join rules are enforced on the server:
 
 - **No game selected** — lobby uses `LOBBY_MAX_PLAYERS` (highest registered

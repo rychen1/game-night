@@ -49,7 +49,7 @@ colors before fuses run out.
   clues &gt; 0); clue must touch ≥1 card
 - Successful play of a 5 restores a clue; misplay → discard + lose a fuse
 - When the deck empties, a final-turns countdown (`finalTurnsLeft`) begins at
-  **`playerCount − 1`**
+  **`playerCount`**
 - Ends on perfect stacks, fuses exhausted, or final turns complete
 
 ### Final round (deck exhaustion)
@@ -58,12 +58,13 @@ When a play or discard draws the **last** card from the deck:
 
 1. That player **completes the current turn** normally (including the draw).
 2. The turn that emptied the deck **does not** consume a final-turn slot.
-3. Each **other** player then receives **exactly one** additional turn.
-4. There are **`N − 1`** such turns after the emptying turn (for `N` players).
-5. The player who drew the final card **does not** take another turn before the
-   game ends.
+3. Each player then receives **exactly one** additional turn, **including the
+   player who drew the final card**.
+4. There are **`N`** such turns after the emptying turn completes (for `N`
+   players). Example: in a 3-player game where B empties the deck, the final
+   turns are C → A → B.
 
-`finalTurnsLeft` is initialized to `N − 1` and decrements once per subsequent
+`finalTurnsLeft` is initialized to `N` and decrements once per subsequent
 completed turn until it reaches zero, then the game ends with `endReason:
 "deck"`.
 

@@ -8,7 +8,7 @@ import type {
 } from "../../protocol/messages.ts";
 import type { CrewTaskDef, ResolvedTask } from "./missions.ts";
 import type { PhysicalCard } from "./deck.ts";
-import { handSizeFor } from "./deck.ts";
+import { handSizesFor } from "./deck.ts";
 import type { CrewGame } from "./CrewGame.ts";
 
 export function task(
@@ -151,8 +151,13 @@ export function dealFromDeck(
   internal.order = [...playerIds];
   internal.hands = new Map();
   let deckIndex = 0;
-  const handSize = handSizeFor(playerIds.length);
-  for (const playerId of playerIds) {
+  const sizes = handSizesFor(playerIds.length);
+  for (let seat = 0; seat < playerIds.length; seat += 1) {
+    const playerId = playerIds[seat];
+    if (playerId === undefined) {
+      continue;
+    }
+    const handSize = sizes[seat] ?? 0;
     const hand: string[] = [];
     for (let i = 0; i < handSize; i += 1) {
       const next = deck[deckIndex];

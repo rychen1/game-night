@@ -17,17 +17,25 @@ export const CREW_SUITS: Exclude<CrewColor, "submarine">[] = [
 const SUIT_RANKS: CrewRank[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 const SUBMARINE_RANKS: CrewRank[] = [1, 2, 3, 4];
 
-export function handSizeFor(playerCount: number): number {
+/** Official Deep Sea deal sizes per seat (2p unchanged — no Tonoja variant). */
+export function handSizesFor(playerCount: number): readonly number[] {
   if (playerCount === 2) {
-    return 10;
+    return [10, 10];
   }
   if (playerCount === 3) {
-    return 9;
+    return [14, 13, 13];
   }
   if (playerCount === 4) {
-    return 8;
+    return [10, 10, 10, 10];
   }
-  return 7;
+  if (playerCount === 5) {
+    return [8, 8, 8, 8, 8];
+  }
+  throw new Error(`Unsupported player count: ${playerCount}`);
+}
+
+export function totalDealtCards(playerCount: number): number {
+  return handSizesFor(playerCount).reduce((sum, size) => sum + size, 0);
 }
 
 export function buildShuffledDeck(): PhysicalCard[] {

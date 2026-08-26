@@ -333,7 +333,7 @@ export class HanabiGame implements Game {
     const emptiedDeck = this.tryDraw(playerId);
     let startedCountdown = false;
     if (emptiedDeck && this.finalTurnsLeft === null) {
-      this.finalTurnsLeft = this.order.length - 1;
+      this.finalTurnsLeft = this.order.length;
       startedCountdown = true;
     }
     this.finishTurn(startedCountdown);

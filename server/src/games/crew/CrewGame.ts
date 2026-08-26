@@ -16,7 +16,7 @@ import type {
 import { GameError, type Game } from "../Game.ts";
 import {
   buildShuffledDeck,
-  handSizeFor,
+  handSizesFor,
   publicCard,
   trickWinnerIndex,
   type PhysicalCard,
@@ -81,9 +81,14 @@ export class CrewGame implements Game {
     this.phase = "TASKS";
     this.hands = new Map();
 
-    const size = handSizeFor(this.order.length);
+    const sizes = handSizesFor(this.order.length);
     let deckIndex = 0;
-    for (const playerId of this.order) {
+    for (let seat = 0; seat < this.order.length; seat += 1) {
+      const playerId = this.order[seat];
+      if (playerId === undefined) {
+        continue;
+      }
+      const size = sizes[seat] ?? 0;
       const hand: string[] = [];
       for (let i = 0; i < size; i += 1) {
         const card = shuffled[deckIndex];
@@ -332,6 +337,9 @@ export class CrewGame implements Game {
     if (this.phase !== "PLAYING") {
       throw new GameError("Communication is not available");
     }
+    if (this.currentTrick.length > 0) {
+      throw new GameError("Communication is only allowed before a trick begins");
+    }
     if (this.communicatedPlayers.has(playerId)) {
       throw new GameError("You have already communicated this mission");
     }
@@ -370,7 +378,10 @@ export class CrewGame implements Game {
       if (this.order[this.turnIndex] === playerId) {
         actions.push("crew_play_card");
       }
-      if (!this.communicatedPlayers.has(playerId)) {
+      if (
+        !this.communicatedPlayers.has(playerId) &&
+        this.currentTrick.length === 0
+      ) {
         actions.push("crew_communicate");
       }
     }
@@ -426,6 +437,9 @@ export class CrewGame implements Game {
     signal: CrewSignal,
     attribute: CrewAttribute,
   ): boolean {
+    if (card.color === "submarine") {
+      return false;
+    }
     if (attribute === "color") {
       const sameColor = hand.filter((c) => c.color === card.color);
       if (signal === "only") {

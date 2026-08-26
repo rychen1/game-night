@@ -30,6 +30,14 @@ export function ownerIdFor(order: string[], playerId: string, round: number): st
   return order[(index - round + n) % n]!;
 }
 
+export function contributionRoundCount(playerCount: number): number {
+  return playerCount % 2 === 0 ? playerCount : playerCount + 1;
+}
+
+export function expectedBookPageCount(playerCount: number): number {
+  return contributionRoundCount(playerCount) + 1;
+}
+
 export function expectedPageKind(pageIndex: number): "prompt" | "drawing" | "guess" {
   if (pageIndex === 0) {
     return "prompt";
@@ -116,7 +124,7 @@ export function submitAllInPhase(game: TelestrationsGame, ids: string[]): void {
 }
 
 export function completeGame(game: TelestrationsGame, ids: string[]): void {
-  const totalRounds = ids.length;
+  const totalRounds = contributionRoundCount(ids.length);
   for (let round = 0; round < totalRounds; round += 1) {
     submitAllInPhase(game, ids);
   }
@@ -128,7 +136,7 @@ export function timeoutRound(game: TelestrationsGame): void {
 }
 
 export function completeGameByTimeout(game: TelestrationsGame, ids: string[]): void {
-  for (let round = 0; round < ids.length; round += 1) {
+  for (let round = 0; round < contributionRoundCount(ids.length); round += 1) {
     timeoutRound(game);
   }
 }

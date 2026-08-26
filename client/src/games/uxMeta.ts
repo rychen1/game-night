@@ -98,7 +98,7 @@ const HOW_TO_PLAY: Record<GameId, GameHowToPlay> = {
     turnStructure:
       "Take turns adding one stroke, then vote for the Fake Artist and (if needed) guess the title.",
     winCondition:
-      "Artists win by catching the Fake Artist; the Fake Artist wins by surviving or guessing correctly.",
+      "Artists win by catching the Fake Artist. If caught, the Fake Artist wins only by guessing the title incorrectly.",
   },
   hanabi: {
     objective:

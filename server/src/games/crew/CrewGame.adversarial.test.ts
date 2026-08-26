@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { parseClientMessage } from "../../protocol/messages.ts";
 import { GameError } from "../Game.ts";
-import { handSizeFor } from "./deck.ts";
+import { handSizesFor, totalDealtCards } from "./deck.ts";
 import { CrewGame } from "./CrewGame.ts";
 import {
   allHandAndTrickCardIds,
@@ -51,12 +51,18 @@ describe("CrewGame second-pass card accounting", () => {
   });
 
   for (const count of [2, 3, 4, 5]) {
-    it(`${count} players deal ${handSizeFor(count)} cards each with no duplicates`, () => {
+    it(`${count} players deal official hand sizes with no duplicates`, () => {
       const ids = playerIds(count);
       const game = new CrewGame();
       game.setup(ids);
+      const expectedSizes = [...handSizesFor(count)].sort((a, b) => b - a);
+      const actualSizes = game
+        .getPublicState()
+        .order.map((id) => game.getPrivateState(id).hand.length)
+        .sort((a, b) => b - a);
+      assert.deepEqual(actualSizes, expectedSizes);
       const dealt = allHandAndTrickCardIds(game);
-      assert.equal(dealt.length, handSizeFor(count) * count);
+      assert.equal(dealt.length, totalDealtCards(count));
       assert.equal(new Set(dealt).size, dealt.length);
       assert.equal(asInternals(game).cards.size, 40);
     });
@@ -302,6 +308,54 @@ describe("CrewGame second-pass communication", () => {
       game.performAction(P2, {
         type: "crew_communicate",
         cardId: "missing",
+        signal: "only",
+        attribute: "color",
+      }),
+    );
+  });
+
+  it("rejects communication during an active trick", () => {
+    const game = new CrewGame();
+    game.setup([P1, P2, P3]);
+    asInternals(game).order = [P1, P2, P3];
+    asInternals(game).turnIndex = 0;
+    asInternals(game).tasks = [winTask("pending", P1, "blue", 9)];
+    game.performAction(P1, { type: "crew_begin_mission" });
+    seedHands(game, {
+      [P1]: [card("lead", "blue", 2), card("keep", "red", 5)],
+      [P2]: [card("follow", "blue", 9)],
+      [P3]: [card("wait", "green", 1)],
+    });
+    playCard(game, P1, "lead");
+
+    assertRejectedAction(game, () =>
+      game.performAction(P2, {
+        type: "crew_communicate",
+        cardId: "follow",
+        signal: "only",
+        attribute: "color",
+      }),
+    );
+    assert.equal(
+      game.getPrivateState(P2).legalActions.includes("crew_communicate"),
+      false,
+    );
+  });
+
+  it("does not expose submarine cards in communicable options", () => {
+    const game = new CrewGame();
+    beginPlaying(game);
+    seedHands(game, {
+      [P1]: [card("sub", "submarine", 2), card("only-blue", "blue", 5)],
+      [P2]: [card("x", "green", 1)],
+    });
+
+    const options = game.getPrivateState(P1).communicableOptions ?? [];
+    assert.ok(options.every((option) => option.cardId !== "sub"));
+    assertRejectedAction(game, () =>
+      game.performAction(P1, {
+        type: "crew_communicate",
+        cardId: "sub",
         signal: "only",
         attribute: "color",
       }),

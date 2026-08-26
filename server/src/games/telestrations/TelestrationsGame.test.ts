@@ -5,6 +5,8 @@ import { TelestrationsGame } from "./TelestrationsGame.ts";
 import {
   asInternals,
   completeGame,
+  contributionRoundCount,
+  expectedBookPageCount,
   ownerIdFor,
   playerIds,
   setDeadline,
@@ -36,7 +38,7 @@ describe("TelestrationsGame setup", () => {
     const state = game.getPublicState();
     assert.equal(state.phase, "DRAWING");
     assert.equal(state.round, 0);
-    assert.equal(state.totalRounds, 3);
+    assert.equal(state.totalRounds, contributionRoundCount(3));
     assert.deepEqual(state.playerOrder, [P1, P2, P3]);
     assert.deepEqual(state.submittedPlayerIds, []);
     assert.equal(state.books, undefined);
@@ -146,7 +148,7 @@ describe("TelestrationsGame chain and rotation", () => {
     setupFixedOrder(game, ids);
 
     submitAllInPhase(game, ids);
-    for (let round = 1; round < ids.length; round += 1) {
+    for (let round = 1; round < contributionRoundCount(ids.length); round += 1) {
       for (const id of ids) {
         assert.notEqual(ownerIdFor(ids, id, round), id);
         const privateState = game.getPrivateState(id);
@@ -175,6 +177,10 @@ describe("TelestrationsGame chain and rotation", () => {
     submitDrawing(game, P2, [{ playerId: P2, points: [{ x: 0.5, y: 0.6 }] }]);
     submitDrawing(game, P3, [{ playerId: P3, points: [{ x: 0.6, y: 0.7 }] }]);
 
+    submitGuess(game, P1, "g4");
+    submitGuess(game, P2, "g5");
+    submitGuess(game, P3, "g6");
+
     const books = game.getPublicState().books!;
     const book1 = books.find((book) => book.ownerId === P1)!;
     assert.deepEqual(
@@ -184,6 +190,7 @@ describe("TelestrationsGame chain and rotation", () => {
         ["drawing", P1],
         ["guess", P2],
         ["drawing", P3],
+        ["guess", P1],
       ],
     );
   });
@@ -202,7 +209,7 @@ describe("TelestrationsGame chain and rotation", () => {
   });
 
   for (let count = 3; count <= 6; count += 1) {
-    it(`${count} players produce ${count + 1} pages per book after completion`, () => {
+    it(`${count} players produce ${expectedBookPageCount(count)} pages per book after completion`, () => {
       const ids = playerIds(count);
       const game = new TelestrationsGame();
       setupFixedOrder(game, ids);
@@ -210,9 +217,26 @@ describe("TelestrationsGame chain and rotation", () => {
 
       for (const id of ids) {
         const book = game.getPublicState().books!.find((entry) => entry.ownerId === id)!;
-        assert.equal(book.pages.length, count + 1);
+        assert.equal(book.pages.length, expectedBookPageCount(count));
         assert.equal(book.pages[0]?.kind, "prompt");
         assert.equal(book.pages[0]?.authorId, id);
+        assert.equal(book.pages.at(-1)?.kind, "guess");
+      }
+    });
+  }
+
+  for (const count of [5, 7]) {
+    it(`${count} players end every book on a guess`, () => {
+      const ids = playerIds(count);
+      const game = new TelestrationsGame();
+      setupFixedOrder(game, ids);
+      completeGame(game, ids);
+
+      assert.equal(game.getPublicState().phase, "REVEAL");
+      assert.equal(game.getPublicState().totalRounds, contributionRoundCount(count));
+      for (const id of ids) {
+        const book = game.getPublicState().books!.find((entry) => entry.ownerId === id)!;
+        assert.equal(book.pages.at(-1)?.kind, "guess");
       }
     });
   }
@@ -361,7 +385,7 @@ describe("TelestrationsGame turn progression", () => {
     completeGame(game, [P1, P2, P3]);
 
     assert.equal(game.getPublicState().phase, "REVEAL");
-    assert.equal(game.getPublicState().round, 3);
+    assert.equal(game.getPublicState().round, contributionRoundCount(3));
     assert.equal(game.isGameOver(), true);
   });
 

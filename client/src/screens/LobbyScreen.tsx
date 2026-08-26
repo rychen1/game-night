@@ -6,6 +6,7 @@ import type {
 } from "../network/messages.ts";
 import { ActionFeedback } from "../components/ActionFeedback.tsx";
 import { GamePickerGrid } from "../components/GamePickerGrid.tsx";
+import { RoomShareSection } from "../components/RoomShareSection.tsx";
 import { RoomPlayersSection } from "../components/RoomPlayersSection.tsx";
 import { SectionPanel } from "../components/SectionPanel.tsx";
 import { WaitingStatus } from "../components/WaitingStatus.tsx";
@@ -64,6 +65,7 @@ export function LobbyScreen({
         <p className="lobby-room-code">
           Room code: <span className="room-code">{room.roomCode}</span>
         </p>
+        <RoomShareSection roomCode={room.roomCode} />
       </header>
       {showLede ? (
         <p className="lede">

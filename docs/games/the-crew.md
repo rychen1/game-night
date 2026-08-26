@@ -46,7 +46,8 @@ official campaign ruleset.
 ## Core rules (as implemented)
 
 1. Deal from a 40-card deck (suits red/blue/green/yellow ranks 1–9; submarine
-   trump 1–4). Hand sizes depend on player count; some cards remain undealt.
+   trump 1–4). Official Deep Sea sizes: 3p → 14/13/13; 4p → 10 each; 5p → 8
+   each (all 40 cards dealt). 2p uses 10 each with 20 undealt (no Tonoja).
 2. Pick a random starter mission; assign tasks; mark outcomes for undealt
    target cards where applicable (`player_wins_card` on an undealt card →
    `failed`; `player_must_not_win` on an undealt card → `satisfied`).
@@ -58,8 +59,9 @@ official campaign ruleset.
    `satisfied`.
 4. **PLAYING**: follow-suit tricks; submarine is trump; winner leads next.
 5. Communication: at most **one** per player per mission, only during
-   `PLAYING`, using legal `communicableOptions` (highest/lowest/only ×
-   color/rank) about a card still in hand.
+   `PLAYING` and **before a trick begins**, using legal `communicableOptions`
+   (highest/lowest/only × color/rank) about a card still in hand. Submarine
+   cards cannot be communicated.
 6. After tricks, tasks update to `satisfied` / `failed` / `pending`. All
    satisfied → success; any failed → failure.
 

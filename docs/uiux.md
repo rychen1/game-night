@@ -173,6 +173,10 @@ First viewport composition:
 3. Games-first launcher (`GamePickerGrid`)
 4. Secondary: Join (name + room code + optional password) and Browse rooms
 
+Share links (`/?code=XXXX`) land on the home join form with the room code
+pre-filled; when a saved name exists the client auto-joins via the normal
+`join_room` flow. Private rooms still prompt for the password on join.
+
 Do not turn the home hero into a dashboard of stats or schedules.
 
 ### Game picker
@@ -206,6 +210,8 @@ require the room password to join. Behavior is unchanged — only presentation.
 ## Lobby and setup
 
 - Header: “Room Lobby” + centered **Room code: XXXX** (`.room-code`)
+- **Share room** — QR code + **Copy link** for `https://{host}/?code=XXXX`
+  (`.room-share` in the lobby header); same URL the QR encodes
 - Private rooms: visibility badge; password required on join (not listed in
   browser)
 

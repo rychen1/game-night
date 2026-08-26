@@ -10,6 +10,8 @@ import {
   cloneBookLengths,
   completeGame,
   completeGameByTimeout,
+  contributionRoundCount,
+  expectedBookPageCount,
   expectedPageKind,
   ownerIdFor,
   playerIds,
@@ -50,7 +52,7 @@ describe("TelestrationsGame second-pass chain integrity", () => {
       setupFixedOrder(game, ids, alphaPrompts(count));
 
       assertBookIntegrity(game, ids, 0);
-      for (let round = 0; round < count; round += 1) {
+      for (let round = 0; round < contributionRoundCount(count); round += 1) {
         submitAllInPhase(game, ids);
         assertBookIntegrity(game, ids, round + 1);
       }
@@ -58,7 +60,7 @@ describe("TelestrationsGame second-pass chain integrity", () => {
       assert.equal(game.getPublicState().phase, "REVEAL");
       for (const id of ids) {
         const book = game.getPublicState().books!.find((entry) => entry.ownerId === id)!;
-        assert.equal(book.pages.length, count + 1);
+        assert.equal(book.pages.length, expectedBookPageCount(count));
       }
     });
   }
@@ -69,7 +71,7 @@ describe("TelestrationsGame second-pass chain integrity", () => {
       const game = new TelestrationsGame();
       setupFixedOrder(game, ids, alphaPrompts(count));
 
-      for (let round = 0; round < count; round += 1) {
+      for (let round = 0; round < contributionRoundCount(count); round += 1) {
         const phase = game.getPublicState().phase;
         for (const actorId of ids) {
           const before = bookLengths(game);
@@ -106,8 +108,7 @@ describe("TelestrationsGame second-pass chain integrity", () => {
         for (let pageIndex = 0; pageIndex < book.pages.length; pageIndex += 1) {
           assert.equal(book.pages[pageIndex]?.kind, expectedPageKind(pageIndex));
         }
-        const finalKind = expectedPageKind(count);
-        assert.equal(book.pages.at(-1)?.kind, finalKind);
+        assert.equal(book.pages.at(-1)?.kind, "guess");
       }
     });
   }
@@ -546,10 +547,11 @@ describe("TelestrationsGame second-pass timeout-only and mixed games", () => {
       assert.equal(game.getPublicState().phase, "REVEAL");
       for (const id of ids) {
         const book = game.getPublicState().books!.find((entry) => entry.ownerId === id)!;
-        assert.equal(book.pages.length, count + 1);
+        assert.equal(book.pages.length, expectedBookPageCount(count));
         for (let pageIndex = 1; pageIndex < book.pages.length; pageIndex += 1) {
           assert.equal(book.pages[pageIndex]?.kind, expectedPageKind(pageIndex));
         }
+        assert.equal(book.pages.at(-1)?.kind, "guess");
       }
     });
   }
@@ -560,7 +562,7 @@ describe("TelestrationsGame second-pass timeout-only and mixed games", () => {
       const game = new TelestrationsGame();
       setupFixedOrder(game, ids, alphaPrompts(count));
 
-      for (let round = 0; round < count; round += 1) {
+      for (let round = 0; round < contributionRoundCount(count); round += 1) {
         for (const [index, id] of ids.entries()) {
           if (index % 2 === 0) {
             if (game.getPublicState().phase === "DRAWING") {

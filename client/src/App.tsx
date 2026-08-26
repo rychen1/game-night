@@ -31,6 +31,10 @@ import { BrowseRoomsScreen } from "./screens/BrowseRoomsScreen.tsx";
 import { HomeCreateScreen } from "./screens/HomeCreateScreen.tsx";
 import { HomeScreen } from "./screens/HomeScreen.tsx";
 import { LobbyScreen } from "./screens/LobbyScreen.tsx";
+import {
+  clearRoomShareLocation,
+  parseRoomShareLocation,
+} from "./room/roomShare.ts";
 import "./App.css";
 
 type SocketHandle = {
@@ -40,13 +44,28 @@ type SocketHandle = {
 
 type HomeView = "home" | "browse";
 
+function readInitialShareCode(): string | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  return parseRoomShareLocation(
+    window.location.pathname,
+    window.location.search,
+  );
+}
+
 function App() {
   const socketRef = useRef<SocketHandle | null>(null);
   const pendingGameIdRef = useRef<GameId | null>(null);
+  const reconnectPendingRef = useRef(loadReconnectToken() !== null);
+  const initialShareCode = readInitialShareCode();
   const [connected, setConnected] = useState(false);
   const [socketEverOpened, setSocketEverOpened] = useState(false);
   const [name, setName] = useState(loadSavedName);
-  const [joinCode, setJoinCode] = useState("");
+  const [joinCode, setJoinCode] = useState(initialShareCode ?? "");
+  const [pendingShareCode, setPendingShareCode] = useState<string | null>(
+    initialShareCode,
+  );
   const [joinPassword, setJoinPassword] = useState("");
   const [showJoinPassword, setShowJoinPassword] = useState(false);
   const [visibility, setVisibility] = useState<RoomVisibility>("public");
@@ -70,6 +89,8 @@ function App() {
         const token = loadReconnectToken();
         if (token) {
           socket.send({ type: "reconnect", reconnectToken: token });
+        } else {
+          reconnectPendingRef.current = false;
         }
       },
       onClose() {
@@ -86,10 +107,34 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (
+      !connected ||
+      reconnectPendingRef.current ||
+      playerId !== null ||
+      room !== null ||
+      pendingShareCode === null ||
+      name.trim().length === 0
+    ) {
+      return;
+    }
+    setExitNotice(null);
+    send({
+      type: "join_room",
+      roomCode: pendingShareCode,
+      name: name.trim(),
+    });
+    setPendingShareCode(null);
+    clearRoomShareLocation();
+  }, [connected, pendingShareCode, name, playerId, room]);
+
   function handleServerMessage(message: ServerMessage): void {
     switch (message.type) {
       case "room_created":
       case "welcome":
+        reconnectPendingRef.current = false;
+        setPendingShareCode(null);
+        clearRoomShareLocation();
         saveReconnectToken(message.reconnectToken);
         setPlayerId(message.playerId);
         setHomeView("home");
@@ -138,6 +183,7 @@ function App() {
       case "error":
         if (message.message === "Unknown reconnect token") {
           clearReconnectToken();
+          reconnectPendingRef.current = false;
         }
         if (message.message === "Password required") {
           setShowJoinPassword(true);
@@ -397,6 +443,7 @@ function App() {
         onNameChange={handleNameChange}
         onJoinCodeChange={(code) => {
           setJoinCode(code);
+          setPendingShareCode(null);
           setShowJoinPassword(false);
           setJoinPassword("");
         }}

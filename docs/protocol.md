@@ -84,6 +84,13 @@ Do not ship the full secret game blob and rely on the UI to hide fields.
 
 Room codes: 4 alphanumeric characters (normalized uppercase).
 
+**Share URLs (client only):** the lobby exposes `https://{host}/?code=XXXX`
+(and QR codes for the same URL). Opening that link pre-fills the home join
+form and may auto-send `join_room` when a display name is already saved.
+The server does not parse share URLs; join still uses `join_room` with
+`roomCode`. Path form `/join/XXXX` is also accepted by the client. Passwords
+are never embedded in share links.
+
 Visibility: `"public"` \| `"private"`. Private create/join requires password
 (length limits enforced in parser).
 

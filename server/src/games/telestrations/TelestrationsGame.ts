@@ -20,6 +20,10 @@ const DRAWING_ROUND_MS = 60_000;
 const GUESSING_ROUND_MS = 35_000;
 const TIMEOUT_GUESS = "(timed out)";
 
+function contributionRoundCount(playerCount: number): number {
+  return playerCount % 2 === 0 ? playerCount : playerCount + 1;
+}
+
 type PromptPage = { kind: "prompt"; authorId: string; text: string };
 type DrawingPage = { kind: "drawing"; authorId: string; strokes: Stroke[] };
 type GuessPage = { kind: "guess"; authorId: string; text: string };
@@ -92,7 +96,7 @@ export class TelestrationsGame implements Game {
       kind: "telestrations",
       phase: this.phase,
       round: this.round,
-      totalRounds: this.order.length,
+      totalRounds: contributionRoundCount(this.order.length),
       playerOrder: [...this.order],
       submittedPlayerIds: [...this.submitted],
     };
@@ -114,7 +118,7 @@ export class TelestrationsGame implements Game {
       kind: "telestrations" as const,
       phase: this.phase,
       round: this.round,
-      totalRounds: this.order.length,
+      totalRounds: contributionRoundCount(this.order.length),
       submitted,
       legalActions: this.legalActions(playerId),
     };
@@ -261,7 +265,7 @@ export class TelestrationsGame implements Game {
     }
     this.round += 1;
     this.submitted = new Set();
-    if (this.round >= this.order.length) {
+    if (this.round >= contributionRoundCount(this.order.length)) {
       this.phase = "REVEAL";
       this.endsAt = null;
       return;

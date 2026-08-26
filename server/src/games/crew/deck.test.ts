@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   buildShuffledDeck,
-  handSizeFor,
+  handSizesFor,
+  totalDealtCards,
   trickWinnerIndex,
 } from "./deck.ts";
 import { buildOrderedDeck, card } from "./testHelpers.ts";
@@ -14,11 +15,15 @@ describe("Crew deck", () => {
     assert.equal(new Set(deck.map((entry) => entry.cardId)).size, 40);
   });
 
-  it("assigns hand sizes 10/9/8/7 for 2/3/4/5 players", () => {
-    assert.equal(handSizeFor(2), 10);
-    assert.equal(handSizeFor(3), 9);
-    assert.equal(handSizeFor(4), 8);
-    assert.equal(handSizeFor(5), 7);
+  it("assigns official Deep Sea deal sizes for 2/3/4/5 players", () => {
+    assert.deepEqual(handSizesFor(2), [10, 10]);
+    assert.deepEqual(handSizesFor(3), [14, 13, 13]);
+    assert.deepEqual(handSizesFor(4), [10, 10, 10, 10]);
+    assert.deepEqual(handSizesFor(5), [8, 8, 8, 8, 8]);
+    assert.equal(totalDealtCards(2), 20);
+    assert.equal(totalDealtCards(3), 40);
+    assert.equal(totalDealtCards(4), 40);
+    assert.equal(totalDealtCards(5), 40);
   });
 
   it("shuffled deck preserves 40 unique cards", () => {

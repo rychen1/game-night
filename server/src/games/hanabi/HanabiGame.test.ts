@@ -433,26 +433,16 @@ function assertFinalRoundSequence(
   emptyDeckViaAction(game, emptierId, emptierCardId, via);
 
   assert.equal(game.getPublicState().deckCount, 0);
-  assert.equal(game.getPublicState().finalTurnsLeft, playerIds.length - 1);
+  assert.equal(game.getPublicState().finalTurnsLeft, playerIds.length);
   assert.equal(game.getPublicState().phase, "PLAYING");
 
   const turnsAfterEmpty: string[] = [];
   let current = game.getPublicState().currentPlayerId;
-  assert.notEqual(
-    current,
-    emptierId,
-    "emptier should not receive another turn immediately",
-  );
 
-  for (let i = 0; i < playerIds.length - 1; i += 1) {
+  for (let i = 0; i < playerIds.length; i += 1) {
     turnsAfterEmpty.push(current);
-    assert.notEqual(
-      current,
-      emptierId,
-      "emptier must not receive a post-empty final turn",
-    );
     passTurnWithClue(game, current, playerIds);
-    if (i < playerIds.length - 2) {
+    if (i < playerIds.length - 1) {
       assert.equal(game.getPublicState().phase, "PLAYING");
       current = game.getPublicState().currentPlayerId;
     }
@@ -460,12 +450,9 @@ function assertFinalRoundSequence(
 
   assert.equal(game.getPublicState().phase, "RESULTS");
   assert.equal(game.getPublicState().endReason, "deck");
-  assert.equal(turnsAfterEmpty.length, playerIds.length - 1);
+  assert.equal(turnsAfterEmpty.length, playerIds.length);
 
   for (const id of playerIds) {
-    if (id === emptierId) {
-      continue;
-    }
     assert.equal(
       turnsAfterEmpty.filter((turn) => turn === id).length,
       1,
@@ -478,11 +465,11 @@ describe("HanabiGame final round regression", () => {
   for (const count of [2, 3, 4, 5]) {
     const playerIds = Array.from({ length: count }, (_, i) => `p${i + 1}`);
 
-    it(`${count} players: discard path leaves N-1 turns after the final draw`, () => {
+    it(`${count} players: discard path leaves N final turns after the final draw`, () => {
       assertFinalRoundSequence(playerIds, "discard");
     });
 
-    it(`${count} players: play path leaves N-1 turns after the final draw`, () => {
+    it(`${count} players: play path leaves N final turns after the final draw`, () => {
       assertFinalRoundSequence(playerIds, "play");
     });
   }
