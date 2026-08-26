@@ -65,7 +65,76 @@ Two programs:
 Clients talk to the server primarily over a persistent WebSocket while in a
 session. Message shapes are specified in [`protocol.md`](./protocol.md).
 
-Rooms and game state currently live in **server memory** only.
+Rooms and game state currently live in **server memory** only. That is
+compatible with a **single-server** process. Multiple concurrent server
+instances are not supported without sticky routing plus shared room state
+(out of scope for the prototype).
+
+---
+
+## Deployment assumptions (current)
+
+This section documents how the repo behaves today for production hosting.
+It is not a full runbook.
+
+### How programs are built and started
+
+| Program | Dev | Production-shaped today |
+|---------|-----|-------------------------|
+| Client | `npm run dev` (Vite; proxies `/ws` → `ws://localhost:3001`) | `npm run build` → static files in `client/dist` (`preview` for local check only) |
+| Server | `npm run dev` (`tsx watch`) | `npm start` → `tsx src/server.ts` (TypeScript via `tsx`; `tsconfig` uses `noEmit`) |
+
+There is **no** root monorepo start script and **no** Express static hosting of
+`client/dist` yet. A production deploy must either:
+
+1. Serve the Vite build and the WebSocket API under the **same public origin**
+   (reverse proxy / platform that routes `/` to static and `/ws` to Node), or
+2. Extend the server later to serve the built client itself.
+
+### WebSocket URL and HTTPS / WSS
+
+The client opens:
+
+```text
+(ws|wss)://{window.location.host}/ws
+```
+
+- Page on `https:` → `wss:` (correct for TLS sites)
+- Page on `http:` → `ws:`
+
+So **same-origin** hosting (or a reverse proxy that terminates TLS and forwards
+`/ws`) works for production WSS. Splitting the SPA onto a different host than
+the API **without** a matching proxy or configurable WS base URL will break
+connections (the client always uses the page host).
+
+The Node process listens with plain `http.createServer` (no in-process TLS).
+Typical PaaS / reverse-proxy TLS termination is the expected production model.
+
+Local Vite only: the `/ws` proxy to `localhost:3001` is **dev-only**
+(`client/vite.config.ts`).
+
+### Port binding
+
+The server listens on **`process.env.PORT`** when set (typical PaaS inject
+this), otherwise **`3001`** for local development. The Vite dev proxy still
+targets `localhost:3001`.
+
+### HTTP surface today
+
+- `GET /health` → `{ ok: true }`
+- WebSocket path `/ws`
+- `cors()` enabled (wide open) — primarily relevant if HTTP APIs are called
+  cross-origin; gameplay is WebSocket
+
+### In-memory rooms vs single-server deploy
+
+Compatible with **one** Node process:
+
+- Rooms, players, reconnect tokens, and timers live in process memory
+- Restart clears all rooms and invalidates reconnect tokens
+- Horizontal scale-out needs shared state (not implemented)
+
+See also long-term notes under [Long-term extensibility](#long-term-extensibility).
 
 ---
 

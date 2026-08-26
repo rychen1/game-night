@@ -5,7 +5,7 @@ import { WebSocketServer } from "ws";
 import { RoomManager } from "./rooms/RoomManager.ts";
 import { WebSocketManager } from "./websocket/WebSocketManager.ts";
 
-const PORT = 3001;
+const PORT = Number(process.env.PORT) || 3001;
 
 const app = express();
 app.use(cors());
