@@ -111,6 +111,7 @@ export class PictionaryGame implements Game {
           solverId: round.solverId,
           strokes: cloneStrokes(round.strokes),
           guesses: round.guesses.map((guess) => ({ ...guess })),
+          ...(round.skipped ? { skipped: true } : {}),
         })),
       };
     }
@@ -203,15 +204,23 @@ export class PictionaryGame implements Game {
     if (Date.now() < this.endsAt) {
       return;
     }
-    // Unsolved: consume this drawer's slot and continue (or RESULTS).
+    // Unsolved: record a skipped slot for postgame, then continue (or RESULTS).
     const drawerId = this.currentDrawer();
-    this.strokes = [];
-    this.guesses = [];
-    this.word = "";
     if (drawerId) {
+      this.history.push({
+        drawerId,
+        word: this.word,
+        solverId: "",
+        strokes: [],
+        guesses: this.guesses.map((guess) => ({ ...guess })),
+        skipped: true,
+      });
       this.remainingToDraw = this.remainingToDraw.filter((id) => id !== drawerId);
       this.drawn.add(drawerId);
     }
+    this.strokes = [];
+    this.guesses = [];
+    this.word = "";
     if (this.remainingToDraw.length === 0) {
       this.phase = "RESULTS";
       this.endsAt = null;

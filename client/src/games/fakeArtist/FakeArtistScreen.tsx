@@ -56,6 +56,7 @@ export function FakeArtistScreen({
 }: FakeArtistScreenProps) {
   const [guess, setGuess] = useState("");
   const isHost = room.hostPlayerId === playerId;
+  const isGameOver = game.phase === "RESULTS" || game.phase === "ABORTED";
   const canDraw = privateState?.legalActions.includes("submit_stroke") ?? false;
   const canVote = privateState?.legalActions.includes("vote") ?? false;
   const canGuess = privateState?.legalActions.includes("guess_word") ?? false;
@@ -334,21 +335,23 @@ export function FakeArtistScreen({
         ) : null}
 
         <SectionPanel aria-label="Room">
-          <GamePlayerList
-            players={room.players}
-            playerId={playerId}
-            renderExtraTags={(player) => (
-              <>
-                {game.currentPlayerId === player.id &&
-                game.phase === "DRAWING" ? (
-                  <em>drawing</em>
-                ) : null}
-                {game.votedPlayerIds.includes(player.id) ? (
-                  <em>voted</em>
-                ) : null}
-              </>
-            )}
-          />
+          {!isGameOver ? (
+            <GamePlayerList
+              players={room.players}
+              playerId={playerId}
+              renderExtraTags={(player) => (
+                <>
+                  {game.currentPlayerId === player.id &&
+                  game.phase === "DRAWING" ? (
+                    <em>drawing</em>
+                  ) : null}
+                  {game.votedPlayerIds.includes(player.id) ? (
+                    <em>voted</em>
+                  ) : null}
+                </>
+              )}
+            />
+          ) : null}
 
           <form
             className="inline"

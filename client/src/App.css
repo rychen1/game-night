@@ -1460,9 +1460,8 @@ summary:focus-visible {
 .fake-artist-history,
 .telestrations-history,
 .pictionary-history {
-  border-top: 1px solid var(--border);
-  margin-top: 12px;
-  padding-top: 8px;
+  margin: 0;
+  padding: 0;
   color: var(--text);
   font-family: var(--font-body);
   font-size: var(--type-meta);
@@ -2545,8 +2544,8 @@ button.hanabi-card {
 }
 
 .hanabi-history {
-  border-top: 1px solid var(--border);
-  padding-top: 8px;
+  margin: 0;
+  padding: 0;
   color: var(--text);
   font-family: var(--font-body);
   font-size: var(--type-meta);
@@ -3106,8 +3105,8 @@ button.hanabi-card {
 }
 
 .crew-history {
-  border-top: 1px solid var(--border);
-  padding-top: 8px;
+  margin: 0;
+  padding: 0;
   color: var(--text);
   font-family: var(--font-body);
   font-size: var(--type-meta);

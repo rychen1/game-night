@@ -245,7 +245,9 @@ describe("PictionaryGame timer and round transitions", () => {
     assert.equal(state.round, 2);
     assert.equal(state.strokes.length, 0);
     assert.equal(state.guesses.length, 0);
-    assert.equal(asInternals(game).history.length, 0);
+    assert.equal(asInternals(game).history.length, 1);
+    assert.equal(asInternals(game).history[0]?.drawerId, P1);
+    assert.equal(asInternals(game).history[0]?.skipped, true);
     assert.ok(state.endsAt);
   });
 
@@ -272,7 +274,33 @@ describe("PictionaryGame timer and round transitions", () => {
 
     assert.equal(game.getPublicState().phase, "RESULTS");
     assert.equal(game.getPublicState().endsAt, undefined);
-    assert.equal(asInternals(game).history.length, 0);
+    assert.equal(asInternals(game).history.length, 1);
+    assert.equal(asInternals(game).history[0]?.drawerId, P3);
+    assert.equal(asInternals(game).history[0]?.skipped, true);
+  });
+
+  it("includes skipped turns in RESULTS history for the postgame gallery", () => {
+    const game = new PictionaryGame();
+    setupFixedQueue(game, [P1, P2, P3]);
+    setWord(game, "Castle");
+    game.performAction(P2, { type: "submit_guess", text: "Castle" });
+
+    setDeadline(game, Date.now() - 1);
+    game.onTimer();
+
+    setWord(game, "Dragon");
+    game.performAction(P1, { type: "submit_guess", text: "Dragon" });
+
+    const results = game.getPublicState();
+    assert.equal(results.phase, "RESULTS");
+    assert.equal(results.history?.length, 3);
+    assert.equal(results.history?.[0]?.drawerId, P1);
+    assert.notEqual(results.history?.[0]?.skipped, true);
+    assert.equal(results.history?.[1]?.drawerId, P2);
+    assert.equal(results.history?.[1]?.skipped, true);
+    assert.equal(results.history?.[1]?.strokes.length, 0);
+    assert.equal(results.history?.[2]?.drawerId, P3);
+    assert.notEqual(results.history?.[2]?.skipped, true);
   });
 
   it("enters RESULTS after the final correct guess", () => {

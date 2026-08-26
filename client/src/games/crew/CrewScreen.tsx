@@ -230,6 +230,7 @@ export function CrewScreen({
 
   const isTasks = game.phase === "TASKS";
   const isPlaying = game.phase === "PLAYING";
+  const isGameOver = game.phase === "RESULTS" || game.phase === "ABORTED";
 
   return (
     <main className="page crew-page">
@@ -694,15 +695,17 @@ export function CrewScreen({
         ) : null}
 
         <SectionPanel aria-label="Room">
-          <GamePlayerList
-            players={room.players}
-            playerId={playerId}
-            renderExtraTags={(player) =>
-              game.currentPlayerId === player.id && isPlaying ? (
-                <em>turn</em>
-              ) : null
-            }
-          />
+          {!isGameOver ? (
+            <GamePlayerList
+              players={room.players}
+              playerId={playerId}
+              renderExtraTags={(player) =>
+                game.currentPlayerId === player.id && isPlaying ? (
+                  <em>turn</em>
+                ) : null
+              }
+            />
+          ) : null}
 
           <form
             className="inline"

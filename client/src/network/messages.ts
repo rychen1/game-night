@@ -184,6 +184,8 @@ export type PictionaryRoundResult = {
   solverId: string;
   strokes: Stroke[];
   guesses: PictionaryGuess[];
+  /** True when the drawer’s turn ended because the round timer expired. */
+  skipped?: boolean;
 };
 
 export type PictionaryPublicState = {

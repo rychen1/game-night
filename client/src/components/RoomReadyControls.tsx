@@ -102,7 +102,7 @@ export function RoomReadyControls({
       {!isHost ? (
         <p className="status">
           Waiting for the host to{" "}
-          {proceedLabel === "Start Game" ? "start" : "continue"}
+          {proceedLabel === "Start Game" ? "start" : "start another game"}
           {allReady ? "." : " once everyone is ready."}
         </p>
       ) : null}

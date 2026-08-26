@@ -54,6 +54,7 @@ function occupancyStatus(
   seatedCount: number,
   minPlayers: number,
   maxPlayers: number,
+  isReplay = false,
 ): OccupancyStatus {
   if (seatedCount < minPlayers) {
     const need = minPlayers - seatedCount;
@@ -76,7 +77,9 @@ function occupancyStatus(
   }
   return {
     ok: true,
-    text: "Ready when everyone is ready",
+    text: isReplay
+      ? "Ready to play again when everyone is ready"
+      : "Ready when everyone is ready",
   };
 }
 
@@ -103,8 +106,9 @@ export function RoomPlayersSection({
 }: RoomPlayersSectionProps) {
   const seatedCount = players.length;
   const hasRange = minPlayers !== undefined && maxPlayers !== undefined;
+  const isReplay = readiness?.proceedLabel === "Play Again";
   const occupancy = hasRange
-    ? occupancyStatus(seatedCount, minPlayers, maxPlayers)
+    ? occupancyStatus(seatedCount, minPlayers, maxPlayers, isReplay)
     : null;
   const { readyCount, total } = readyCounts(players);
   const inRange =
@@ -151,7 +155,9 @@ export function RoomPlayersSection({
       {readiness ? (
         <div className="room-players__actions">
           <p className="section-status room-players__ready-count">
-            {readyCount} / {total} ready
+            {isReplay
+              ? `${readyCount} / ${total} ready to play again`
+              : `${readyCount} / ${total} ready`}
           </p>
           <RoomReadyControls
             playerId={playerId}

@@ -145,6 +145,7 @@ export function HanabiScreen({
   const [previewClue, setPreviewClue] = useState<HanabiClue | null>(null);
 
   const isHost = room.hostPlayerId === playerId;
+  const isGameOver = game.phase === "RESULTS" || game.phase === "ABORTED";
   const myTurn = game.phase === "PLAYING" && game.currentPlayerId === playerId;
   const canClue = privateState?.legalActions.includes("give_clue") ?? false;
   const canPlay = privateState?.legalActions.includes("play_card") ?? false;
@@ -655,15 +656,17 @@ export function HanabiScreen({
         ) : null}
 
         <SectionPanel aria-label="Room">
-          <GamePlayerList
-            players={room.players}
-            playerId={playerId}
-            renderExtraTags={(player) =>
-              game.currentPlayerId === player.id && game.phase === "PLAYING" ? (
-                <em>turn</em>
-              ) : null
-            }
-          />
+          {!isGameOver ? (
+            <GamePlayerList
+              players={room.players}
+              playerId={playerId}
+              renderExtraTags={(player) =>
+                game.currentPlayerId === player.id && game.phase === "PLAYING" ? (
+                  <em>turn</em>
+                ) : null
+              }
+            />
+          ) : null}
 
           <form
             className="inline"

@@ -58,6 +58,7 @@ export function TelestrationsScreen({
   const [draft, setDraft] = useState<Stroke[]>([]);
   const [guess, setGuess] = useState("");
   const isHost = room.hostPlayerId === playerId;
+  const isGameOver = game.phase === "REVEAL" || game.phase === "ABORTED";
   const canDraw = privateState?.legalActions.includes("submit_drawing") ?? false;
   const canGuess = privateState?.legalActions.includes("submit_guess") ?? false;
   const isActivePlay =
@@ -311,15 +312,17 @@ export function TelestrationsScreen({
         ) : null}
 
         <SectionPanel aria-label="Room">
-          <GamePlayerList
-            players={room.players}
-            playerId={playerId}
-            renderExtraTags={(player) =>
-              game.submittedPlayerIds.includes(player.id) ? (
-                <em>submitted</em>
-              ) : null
-            }
-          />
+          {!isGameOver ? (
+            <GamePlayerList
+              players={room.players}
+              playerId={playerId}
+              renderExtraTags={(player) =>
+                game.submittedPlayerIds.includes(player.id) ? (
+                  <em>submitted</em>
+                ) : null
+              }
+            />
+          ) : null}
 
           <form
             className="inline"

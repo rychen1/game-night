@@ -55,6 +55,7 @@ export function PictionaryScreen({
 }: PictionaryScreenProps) {
   const [guess, setGuess] = useState("");
   const isHost = room.hostPlayerId === playerId;
+  const isGameOver = game.phase === "RESULTS" || game.phase === "ABORTED";
   const isDrawer = privateState?.role === "drawer";
   const canDraw = privateState?.legalActions.includes("submit_stroke") ?? false;
   const canGuess = privateState?.legalActions.includes("submit_guess") ?? false;
@@ -237,7 +238,9 @@ export function PictionaryScreen({
                       <strong>{round.word}</strong>
                     </h3>
                     <p className="status">
-                      Guessed by {playerName(room.players, round.solverId)}
+                      {round.skipped
+                        ? "Time ran out — nobody guessed correctly"
+                        : `Guessed by ${playerName(room.players, round.solverId)}`}
                     </p>
                     <DrawingCanvas
                       strokes={round.strokes}
@@ -290,15 +293,17 @@ export function PictionaryScreen({
         ) : null}
 
         <SectionPanel aria-label="Room">
-          <GamePlayerList
-            players={room.players}
-            playerId={playerId}
-            renderExtraTags={(player) =>
-              game.drawerId === player.id && game.phase === "DRAWING" ? (
-                <em>drawing</em>
-              ) : null
-            }
-          />
+          {!isGameOver ? (
+            <GamePlayerList
+              players={room.players}
+              playerId={playerId}
+              renderExtraTags={(player) =>
+                game.drawerId === player.id && game.phase === "DRAWING" ? (
+                  <em>drawing</em>
+                ) : null
+              }
+            />
+          ) : null}
 
           <form
             className="inline"
