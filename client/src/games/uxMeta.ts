@@ -72,6 +72,12 @@ export type GameHowToPlay = {
   winCondition?: string;
 };
 
+export type OfficialRulebook = {
+  url: string;
+  /** Player-facing link text (publisher + product). */
+  label: string;
+};
+
 const HOW_TO_PLAY: Record<GameId, GameHowToPlay> = {
   pictionary: {
     objective: "Draw the secret word so the other players can guess it.",
@@ -110,6 +116,29 @@ const HOW_TO_PLAY: Record<GameId, GameHowToPlay> = {
   },
 };
 
+const OFFICIAL_RULEBOOKS: Record<GameId, OfficialRulebook> = {
+  crew: {
+    url: "https://www.thamesandkosmos.co.uk/wp-content/uploads/2021/02/691869_Crew_Deep-Sea_Manual.pdf",
+    label: "Thames & Kosmos — The Crew: Mission Deep Sea (PDF)",
+  },
+  hanabi: {
+    url: "https://rnrgames.com/Content/RRGames/images/ProductRules/hanabiRules.PDF",
+    label: "R&R Games — Hanabi (PDF)",
+  },
+  fakeArtist: {
+    url: "https://cdn.1j1ju.com/medias/c0/75/df-a-fake-artist-goes-to-new-york-rulebook.pdf",
+    label: "Oink Games — A Fake Artist Goes to New York (PDF)",
+  },
+  pictionary: {
+    url: "https://service.mattel.com/instruction_sheets/DKD47-Eng.pdf",
+    label: "Mattel — Pictionary (PDF)",
+  },
+  telestrations: {
+    url: "https://cdn.shopify.com/s/files/1/0611/3958/3198/files/Compressed_Telestrations_8P_Rules_2025-1.pdf",
+    label: "The Op — Telestrations 8 Player (PDF)",
+  },
+};
+
 export function gameNightMeta(gameId: GameId): GameNightMeta {
   const entry = GAME_CATALOG.find((game) => game.id === gameId);
   if (!entry) {
@@ -126,4 +155,8 @@ export function gameNightMeta(gameId: GameId): GameNightMeta {
 
 export function gameHowToPlay(gameId: GameId): GameHowToPlay {
   return HOW_TO_PLAY[gameId];
+}
+
+export function gameOfficialRulebook(gameId: GameId): OfficialRulebook {
+  return OFFICIAL_RULEBOOKS[gameId];
 }

@@ -28,6 +28,12 @@ the full chains.
 
 ---
 
+## Official rulebook
+
+- [The Op — Telestrations 8 Player (PDF)](https://cdn.shopify.com/s/files/1/0611/3958/3198/files/Compressed_Telestrations_8P_Rules_2025-1.pdf)
+
+---
+
 ## Player count
 
 **3–10** players.

@@ -28,6 +28,12 @@ colors before fuses run out.
 
 ---
 
+## Official rulebook
+
+- [R&R Games — Hanabi (PDF)](https://rnrgames.com/Content/RRGames/images/ProductRules/hanabiRules.PDF)
+
+---
+
 ## Player count
 
 **2–5** players.

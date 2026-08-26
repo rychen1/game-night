@@ -29,6 +29,12 @@ Fake Artist may still win by guessing the title.
 
 ---
 
+## Official rulebook
+
+- [Oink Games — A Fake Artist Goes to New York (PDF)](https://cdn.1j1ju.com/medias/c0/75/df-a-fake-artist-goes-to-new-york-rulebook.pdf)
+
+---
+
 ## Player count
 
 **3–10** players.

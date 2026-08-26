@@ -31,6 +31,12 @@ official campaign ruleset.
 
 ---
 
+## Official rulebook
+
+- [Thames & Kosmos — The Crew: Mission Deep Sea (PDF)](https://www.thamesandkosmos.co.uk/wp-content/uploads/2021/02/691869_Crew_Deep-Sea_Manual.pdf)
+
+---
+
 ## Player count
 
 **2–5** players.

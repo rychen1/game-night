@@ -27,6 +27,12 @@ rotate until each player has drawn once (queue length = player count).
 
 ---
 
+## Official rulebook
+
+- [Mattel — Pictionary (PDF)](https://service.mattel.com/instruction_sheets/DKD47-Eng.pdf)
+
+---
+
 ## Player count
 
 **3–10** players.

@@ -2,6 +2,7 @@ import type { GameId } from "../network/messages.ts";
 import { gameCatalogEntry } from "../games/catalog.ts";
 import {
   gameHowToPlay,
+  gameOfficialRulebook,
   type GameHowToPlay,
 } from "../games/uxMeta.ts";
 
@@ -63,6 +64,7 @@ export function GameInfo({
   const minPlayers = minOverride ?? catalog.minPlayers;
   const maxPlayers = maxOverride ?? catalog.maxPlayers;
   const howTo = howToOverride ?? gameHowToPlay(gameId);
+  const officialRulebook = gameOfficialRulebook(gameId);
   const lobbySectionHeadings = showSummary || showConfiguration;
 
   return (
@@ -114,6 +116,18 @@ export function GameInfo({
                 <p>{howTo.winCondition}</p>
               </section>
             ) : null}
+            <section className="game-info__section">
+              <h3 className="game-info__label">Official rulebook</h3>
+              <p>
+                <a
+                  href={officialRulebook.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {officialRulebook.label}
+                </a>
+              </p>
+            </section>
           </div>
         </details>
       ) : null}
