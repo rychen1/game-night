@@ -43,9 +43,6 @@ export function HomeScreen({
       <header className="home-intro">
         <h1>Game Night</h1>
         <p className="home-tagline">Games for a table full of friends.</p>
-        <p className="home-games">
-          Pictionary · Telestrations · Fake Artist · Hanabi · The Crew
-        </p>
         <p className="home-beta-notice">
           Beta project · Not monetized · Fan project &amp; lab for testing new
           game ideas
