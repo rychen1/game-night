@@ -55,17 +55,20 @@ function readInitialShareCode(): string | null {
   );
 }
 
+/** Captured once at module load so share codes survive URL cleanup / remounts. */
+const INITIAL_SHARE_CODE = readInitialShareCode();
+
 function App() {
   const socketRef = useRef<SocketHandle | null>(null);
   const pendingGameIdRef = useRef<GameId | null>(null);
   const reconnectPendingRef = useRef(loadReconnectToken() !== null);
-  const initialShareCode = readInitialShareCode();
+  const autoJoinAttemptedRef = useRef(false);
   const [connected, setConnected] = useState(false);
   const [socketEverOpened, setSocketEverOpened] = useState(false);
   const [name, setName] = useState(loadSavedName);
-  const [joinCode, setJoinCode] = useState(initialShareCode ?? "");
+  const [joinCode, setJoinCode] = useState(() => INITIAL_SHARE_CODE ?? "");
   const [pendingShareCode, setPendingShareCode] = useState<string | null>(
-    initialShareCode,
+    () => INITIAL_SHARE_CODE,
   );
   const [joinPassword, setJoinPassword] = useState("");
   const [showJoinPassword, setShowJoinPassword] = useState(false);
@@ -115,10 +118,12 @@ function App() {
       playerId !== null ||
       room !== null ||
       pendingShareCode === null ||
-      name.trim().length === 0
+      name.trim().length === 0 ||
+      autoJoinAttemptedRef.current
     ) {
       return;
     }
+    autoJoinAttemptedRef.current = true;
     setExitNotice(null);
     send({
       type: "join_room",
@@ -126,7 +131,6 @@ function App() {
       name: name.trim(),
     });
     setPendingShareCode(null);
-    clearRoomShareLocation();
   }, [connected, pendingShareCode, name, playerId, room]);
 
   function handleServerMessage(message: ServerMessage): void {

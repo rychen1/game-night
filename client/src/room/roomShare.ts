@@ -59,6 +59,11 @@ export function parseRoomShareUrl(href: string): string | null {
   }
 }
 
+/** Whether a join-form room code field contains a valid 4-character code. */
+export function isJoinCodeReady(raw: string): boolean {
+  return normalizeRoomCode(raw) !== null;
+}
+
 /** Build the canonical share URL for a room code on the given origin. */
 export function buildRoomShareUrl(roomCode: string, origin: string): string {
   const code = normalizeRoomCode(roomCode);

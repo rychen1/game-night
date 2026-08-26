@@ -4,6 +4,7 @@ import {
   ROOM_CODE_QUERY_PARAM,
   buildRoomShareUrl,
   buildShareUrl,
+  isJoinCodeReady,
   normalizeRoomCode,
   parseRoomCodeFromPath,
   parseRoomCodeFromSearch,
@@ -23,6 +24,19 @@ describe("normalizeRoomCode", () => {
     assert.equal(normalizeRoomCode("ABC"), null);
     assert.equal(normalizeRoomCode("ABCDE"), null);
     assert.equal(normalizeRoomCode("ABCD!"), null);
+  });
+});
+
+describe("isJoinCodeReady", () => {
+  it("accepts valid join-form values", () => {
+    assert.equal(isJoinCodeReady("abcd"), true);
+    assert.equal(isJoinCodeReady(" 7K4P "), true);
+  });
+
+  it("rejects invalid join-form values", () => {
+    assert.equal(isJoinCodeReady(""), false);
+    assert.equal(isJoinCodeReady("abc"), false);
+    assert.equal(isJoinCodeReady("abcde"), false);
   });
 });
 

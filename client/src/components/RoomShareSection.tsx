@@ -45,18 +45,14 @@ export function RoomShareSection({ roomCode }: RoomShareSectionProps) {
       <div className="room-share__qr">
         <QRCode
           value={shareUrl}
-          size={128}
+          size={112}
           level="M"
           title={`Join room ${roomCode}`}
         />
       </div>
       <div className="room-share__details">
         <p className="room-share__hint">
-          Scan the code or copy the link so friends can join this room.
-        </p>
-        <p className="room-share__url">
-          <span className="visually-hidden">Invitation link</span>
-          <code>{shareUrl}</code>
+          Scan or copy a link to invite friends.
         </p>
         <button type="button" className="secondary" onClick={handleCopyLink}>
           {copyLabel}
