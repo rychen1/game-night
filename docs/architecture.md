@@ -82,7 +82,7 @@ It is not a full runbook.
 | Program | Dev | Production-shaped today |
 |---------|-----|-------------------------|
 | Client | `npm run dev` (Vite; proxies `/ws` → `ws://localhost:3001`) | `npm run build` → static files in `client/dist` |
-| Server | `npm run dev` (`tsx watch`) | `npm start` → `tsx src/server.ts` (TypeScript via `tsx`; `tsconfig` uses `noEmit`) |
+| Server | `npm run dev` (`tsx watch`) | `npm start` → `tsx src/server.ts` (TypeScript via `tsx`; `tsconfig` uses `noEmit`; **`tsx` is a production dependency** so start works with production installs) |
 
 **Production same-origin:** after `client` build, the Node server serves
 `client/dist` (static assets + SPA `index.html` fallback) and keeps WebSocket
