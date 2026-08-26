@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import QRCode from "react-qr-code";
-import { buildRoomShareUrl } from "../room/roomShare.ts";
+import { roomShareInvitationUrl } from "../room/roomShare.ts";
 
 type RoomShareSectionProps = {
   roomCode: string;
@@ -8,7 +8,7 @@ type RoomShareSectionProps = {
 
 export function RoomShareSection({ roomCode }: RoomShareSectionProps) {
   const shareUrl = useMemo(
-    () => buildRoomShareUrl(roomCode, window.location.origin),
+    () => roomShareInvitationUrl(roomCode),
     [roomCode],
   );
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
@@ -16,6 +16,9 @@ export function RoomShareSection({ roomCode }: RoomShareSectionProps) {
   );
 
   const handleCopyLink = useCallback(async () => {
+    if (shareUrl === null) {
+      return;
+    }
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopyState("copied");
@@ -26,6 +29,10 @@ export function RoomShareSection({ roomCode }: RoomShareSectionProps) {
     }
   }, [shareUrl]);
 
+  if (shareUrl === null) {
+    return null;
+  }
+
   const copyLabel =
     copyState === "copied"
       ? "Copied!"
@@ -34,18 +41,27 @@ export function RoomShareSection({ roomCode }: RoomShareSectionProps) {
         : "Copy link";
 
   return (
-    <section className="room-share" aria-label="Share room">
-      <div className="room-share__qr" aria-hidden="true">
-        <QRCode value={shareUrl} size={120} />
+    <div className="room-share">
+      <div className="room-share__qr">
+        <QRCode
+          value={shareUrl}
+          size={128}
+          level="M"
+          title={`Join room ${roomCode}`}
+        />
       </div>
-      <div className="room-share__actions">
+      <div className="room-share__details">
         <p className="room-share__hint">
           Scan the code or copy the link so friends can join this room.
+        </p>
+        <p className="room-share__url">
+          <span className="visually-hidden">Invitation link</span>
+          <code>{shareUrl}</code>
         </p>
         <button type="button" className="secondary" onClick={handleCopyLink}>
           {copyLabel}
         </button>
       </div>
-    </section>
+    </div>
   );
 }

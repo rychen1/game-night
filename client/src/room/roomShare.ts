@@ -9,6 +9,14 @@ export function normalizeRoomCode(raw: string): string | null {
   return ROOM_CODE_PATTERN.test(code) ? code : null;
 }
 
+/** Current page origin for share links (`protocol//host`). */
+export function getRoomShareOrigin(): string {
+  if (typeof window === "undefined") {
+    return "http://localhost";
+  }
+  return window.location.origin;
+}
+
 /** Read a room code from `?code=XXXX` (or other search string). */
 export function parseRoomCodeFromSearch(search: string): string | null {
   const query = search.startsWith("?") ? search.slice(1) : search;
@@ -41,17 +49,39 @@ export function parseRoomShareLocation(
   );
 }
 
+/** Parse a full invitation URL (as encoded in QR codes and copied links). */
+export function parseRoomShareUrl(href: string): string | null {
+  try {
+    const url = new URL(href);
+    return parseRoomShareLocation(url.pathname, url.search);
+  } catch {
+    return null;
+  }
+}
+
 /** Build the canonical share URL for a room code on the given origin. */
 export function buildRoomShareUrl(roomCode: string, origin: string): string {
   const code = normalizeRoomCode(roomCode);
   if (code === null) {
     throw new Error("Invalid room code");
   }
-  const url = new URL(origin.endsWith("/") ? origin.slice(0, -1) : origin);
-  url.pathname = "/";
-  url.search = "";
-  url.searchParams.set(ROOM_CODE_QUERY_PARAM, code);
-  return url.toString();
+  const base = origin.replace(/\/+$/, "");
+  return `${base}/?${ROOM_CODE_QUERY_PARAM}=${code}`;
+}
+
+/** Alias used by tests and UI call sites. */
+export const buildShareUrl = buildRoomShareUrl;
+
+/** Value that must be passed to the QR encoder and clipboard copy. */
+export function roomShareInvitationUrl(
+  roomCode: string,
+  origin: string = getRoomShareOrigin(),
+): string | null {
+  const code = normalizeRoomCode(roomCode);
+  if (code === null) {
+    return null;
+  }
+  return buildRoomShareUrl(code, origin);
 }
 
 /** Remove share parameters from the browser URL without reloading. */
@@ -59,10 +89,7 @@ export function clearRoomShareLocation(): void {
   if (typeof window === "undefined") {
     return;
   }
-  const code = parseRoomShareLocation(
-    window.location.pathname,
-    window.location.search,
-  );
+  const code = parseRoomShareUrl(window.location.href);
   if (code === null) {
     return;
   }

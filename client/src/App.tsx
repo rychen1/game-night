@@ -34,6 +34,7 @@ import { LobbyScreen } from "./screens/LobbyScreen.tsx";
 import {
   clearRoomShareLocation,
   parseRoomShareLocation,
+  parseRoomShareUrl,
 } from "./room/roomShare.ts";
 import "./App.css";
 
@@ -48,9 +49,9 @@ function readInitialShareCode(): string | null {
   if (typeof window === "undefined") {
     return null;
   }
-  return parseRoomShareLocation(
-    window.location.pathname,
-    window.location.search,
+  return (
+    parseRoomShareUrl(window.location.href) ??
+    parseRoomShareLocation(window.location.pathname, window.location.search)
   );
 }
 

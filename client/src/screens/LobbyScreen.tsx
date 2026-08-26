@@ -65,7 +65,6 @@ export function LobbyScreen({
         <p className="lobby-room-code">
           Room code: <span className="room-code">{room.roomCode}</span>
         </p>
-        <RoomShareSection roomCode={room.roomCode} />
       </header>
       {showLede ? (
         <p className="lede">
@@ -80,6 +79,10 @@ export function LobbyScreen({
       ) : null}
 
       <div className="game-stack">
+        <SectionPanel aria-label="Share room">
+          <RoomShareSection roomCode={room.roomCode} />
+        </SectionPanel>
+
         {inSetup && setup ? (
           <SectionPanel aria-label="Game information">
             <GameSetupPanel setup={setup} />

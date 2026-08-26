@@ -210,8 +210,9 @@ require the room password to join. Behavior is unchanged — only presentation.
 ## Lobby and setup
 
 - Header: “Room Lobby” + centered **Room code: XXXX** (`.room-code`)
-- **Share room** — QR code + **Copy link** for `https://{host}/?code=XXXX`
-  (`.room-share` in the lobby header); same URL the QR encodes
+- **Share room** — first lobby `SectionPanel`: compact QR + visible invitation
+  URL + **Copy link** (same canonical URL the QR encodes:
+  `https://{host}/?code=XXXX`)
 - Private rooms: visibility badge; password required on join (not listed in
   browser)
 
