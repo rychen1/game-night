@@ -76,21 +76,31 @@ function PlayingCard({ card }: { card: GangCard }) {
   );
 }
 
-function StrengthToken({
-  star,
+function PositionToken({
+  rank,
   color,
-  small,
+  size = "board",
+  claimed = true,
 }: {
-  star: number;
+  rank: number;
   color: GangChipColor;
-  small?: boolean;
+  size?: "board" | "compact" | "small";
+  claimed?: boolean;
 }) {
+  const sizeClass =
+    size === "small"
+      ? " gang-position-token--small"
+      : size === "compact"
+        ? " gang-position-token--compact"
+        : "";
   return (
     <span
-      className={`gang-chip gang-chip--${color}${small ? " gang-chip--small" : ""}`}
-      aria-label={`Strength ${star}`}
+      className={`gang-position-token${
+        claimed ? ` gang-position-token--${color}` : " gang-position-token--unclaimed"
+      }${sizeClass}`}
+      aria-label={`Strength ${rank}`}
     >
-      {"★".repeat(star)}
+      {rank}
     </span>
   );
 }
@@ -178,7 +188,7 @@ function PlayerChipRows({
                       className={isLocked ? "gang-chip-rows__token gang-chip-rows__token--locked" : "gang-chip-rows__token"}
                       title={isLocked ? "Locked position" : undefined}
                     >
-                      <StrengthToken star={star} color={color} small />
+                      <PositionToken rank={star} color={color} size="small" />
                     </span>
                   ) : (
                     <span className="gang-chip-rows__empty" aria-hidden="true">
@@ -192,23 +202,6 @@ function PlayerChipRows({
         ))}
       </div>
     </div>
-  );
-}
-
-function PositionToken({
-  rank,
-  color,
-}: {
-  rank: number;
-  color: GangChipColor;
-}) {
-  return (
-    <span
-      className={`gang-position-token gang-position-token--${color}`}
-      aria-hidden="true"
-    >
-      {rank}
-    </span>
   );
 }
 
@@ -246,7 +239,9 @@ function StrengthBoard({
           <div
             key={star}
             className={`gang-strength-slot${
-              isClaimed ? " gang-strength-slot--claimed" : " gang-strength-slot--unclaimed"
+              isClaimed
+                ? ` gang-strength-slot--claimed gang-strength-slot--street-${game.chipColor}`
+                : " gang-strength-slot--unclaimed"
             }${isMine ? " gang-strength-slot--mine" : ""}${
               isLocked ? " gang-strength-slot--locked" : ""
             }`}
@@ -280,7 +275,7 @@ function StrengthBoard({
                       : "Claim this position"
                 }
               >
-                <PositionToken rank={star} color={game.chipColor} />
+                <PositionToken rank={star} color={game.chipColor} claimed={isClaimed} />
                 {canClaimOpen ? (
                   <span className="gang-strength-slot__hint">Claim</span>
                 ) : canReleaseMine ? (
@@ -288,7 +283,7 @@ function StrengthBoard({
                 ) : null}
               </button>
             ) : (
-              <PositionToken rank={star} color={game.chipColor} />
+              <PositionToken rank={star} color={game.chipColor} claimed={isClaimed} />
             )}
             {isClaimed ? (
               <span className="gang-strength-slot__name">
@@ -363,7 +358,7 @@ function HeistReview({
                   : "gang-review__reveal gang-review__reveal--incorrect"
               }
             >
-              <StrengthToken star={reveal.star} color="red" />
+              <PositionToken rank={reveal.star} color="red" size="compact" />
               <span className="gang-review__player">
                 {playerName(players, reveal.playerId)}
               </span>
@@ -564,11 +559,8 @@ export function TheGangScreen({
                   {PHASE_LABEL[game.phase]} — {CHIP_COLOR_LABEL[game.chipColor]} tokens
                 </h2>
                 <p className="status">
-                  Positions run weakest (1) to strongest ({game.playerCount}), left to
-                  right. Click a position to claim it or take it from another player.
-                  Click your own position to return it to the center, or claim a new
-                  one to switch. When everyone has claimed, anyone may proceed to the
-                  next street.
+                  1 is weakest, {game.playerCount} is strongest. Claim, steal, or
+                  release positions. Proceed when everyone has one.
                 </p>
 
                 <GetawayDriverPanel

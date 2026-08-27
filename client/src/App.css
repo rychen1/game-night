@@ -3493,6 +3493,27 @@ button.hanabi-card {
   border-color: #cc4444;
 }
 
+.gang-position-token--unclaimed {
+  background: var(--surface);
+  color: var(--text-muted);
+  border-color: var(--border);
+  border-style: dashed;
+}
+
+.gang-position-token--small {
+  width: 1.35rem;
+  height: 1.35rem;
+  font-size: 0.65rem;
+  border-width: 1.5px;
+}
+
+.gang-position-token--compact {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 0.72rem;
+  border-width: 1.5px;
+}
+
 .gang-proceed {
   display: flex;
   flex-direction: column;
@@ -3591,7 +3612,7 @@ button.hanabi-card {
   font-size: 0.85rem;
 }
 
-.gang-chip-rows__token--locked .gang-chip {
+.gang-chip-rows__token--locked .gang-position-token {
   box-shadow: 0 0 0 1px var(--accent);
 }
 
@@ -3614,6 +3635,26 @@ button.hanabi-card {
 
 .gang-strength-slot--claimed {
   border-style: solid;
+}
+
+.gang-strength-slot--claimed.gang-strength-slot--street-white {
+  background: color-mix(in srgb, #f5f5f5 55%, var(--surface));
+  border-color: #ccc;
+}
+
+.gang-strength-slot--claimed.gang-strength-slot--street-yellow {
+  background: color-mix(in srgb, #ffe566 35%, var(--surface));
+  border-color: #d4b800;
+}
+
+.gang-strength-slot--claimed.gang-strength-slot--street-orange {
+  background: color-mix(in srgb, #ffb366 35%, var(--surface));
+  border-color: #d48000;
+}
+
+.gang-strength-slot--claimed.gang-strength-slot--street-red {
+  background: color-mix(in srgb, #ff8888 30%, var(--surface));
+  border-color: #cc4444;
 }
 
 .gang-strength-slot--mine {
