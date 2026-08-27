@@ -494,6 +494,11 @@ export type GangSpecialistDeclaration = {
   label: string;
 };
 
+export type GangGetawayDriverDeclaration = {
+  playerId: string;
+  label: string;
+};
+
 export type GangSpecialistSetup = {
   specialistId: string;
   assigneeId?: string;
@@ -526,6 +531,8 @@ export type GangPublicState = {
   chipHistory: GangChipSnapshot[];
   lockedStars: number[];
   musclePlayerId?: string;
+  getawayDriverAssigneeId?: string;
+  getawayDriverDeclaration?: GangGetawayDriverDeclaration;
   specialistSetup?: GangSpecialistSetup;
   showdownGate?: GangShowdownGate;
   lastHeist?: GangHeistResult;
@@ -536,6 +543,7 @@ export type GangPublicState = {
 export type TheGangActionType =
   | "gang_claim_strength"
   | "gang_release_strength"
+  | "gang_proceed_street"
   | "gang_take_specialist"
   | "gang_informant"
   | "gang_discard_hole"
@@ -608,6 +616,7 @@ export type GangClaimStrengthAction = {
   star: number;
 };
 export type GangReleaseStrengthAction = { type: "gang_release_strength" };
+export type GangProceedStreetAction = { type: "gang_proceed_street" };
 export type GangTakeSpecialistAction = { type: "gang_take_specialist" };
 export type GangInformantAction = {
   type: "gang_informant";
@@ -663,6 +672,7 @@ export type GameAction =
   | SubmitSpectrumGuessAction
   | GangClaimStrengthAction
   | GangReleaseStrengthAction
+  | GangProceedStreetAction
   | GangTakeSpecialistAction
   | GangInformantAction
   | GangDiscardHoleAction
@@ -1077,6 +1087,8 @@ function parseGameAction(value: unknown): GameAction | null {
     }
     case "gang_release_strength":
       return { type: "gang_release_strength" };
+    case "gang_proceed_street":
+      return { type: "gang_proceed_street" };
     case "gang_take_specialist":
       return { type: "gang_take_specialist" };
     case "gang_informant": {

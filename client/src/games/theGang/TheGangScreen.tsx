@@ -26,6 +26,7 @@ import {
 import { gangModeLabel } from "./setup.ts";
 import {
   InformantCardNotice,
+  GetawayDriverPanel,
   ShowdownGatePanel,
   SpecialistSetupPanel,
 } from "./TheGangModifierPanels.tsx";
@@ -194,6 +195,23 @@ function PlayerChipRows({
   );
 }
 
+function PositionToken({
+  rank,
+  color,
+}: {
+  rank: number;
+  color: GangChipColor;
+}) {
+  return (
+    <span
+      className={`gang-position-token gang-position-token--${color}`}
+      aria-hidden="true"
+    >
+      {rank}
+    </span>
+  );
+}
+
 function StrengthBoard({
   game,
   players,
@@ -219,8 +237,10 @@ function StrengthBoard({
         const holderId = holderForStar(game, star);
         const isMine = holderId === playerId;
         const isClaimed = holderId !== null;
-
         const isLocked = lockedStars.includes(star);
+        const canReleaseMine = isMine && isClaimed && canRelease && !isLocked;
+        const canSteal = canClaim && isClaimed && !isMine && !isLocked;
+        const canClaimOpen = canClaim && !isClaimed;
 
         return (
           <div
@@ -232,67 +252,49 @@ function StrengthBoard({
             }`}
             role="listitem"
           >
-            {!isClaimed ? (
+            {canClaimOpen || canSteal || canReleaseMine ? (
               <button
                 type="button"
-                className="gang-strength-slot__claim"
-                disabled={!canClaim}
-                onClick={() => onGameAction({ type: "gang_claim_strength", star })}
-                aria-label={`Claim strength ${star}`}
+                className={`gang-strength-slot__claim${
+                  canSteal ? " gang-strength-slot__claim--steal" : ""
+                }${canReleaseMine ? " gang-strength-slot__claim--release" : ""}`}
+                onClick={() => {
+                  if (canReleaseMine) {
+                    onGameAction({ type: "gang_release_strength" });
+                    return;
+                  }
+                  onGameAction({ type: "gang_claim_strength", star });
+                }}
+                aria-label={
+                  canReleaseMine
+                    ? `Release strength ${star}`
+                    : canSteal
+                      ? `Claim strength ${star} from ${playerName(players, holderId!)}`
+                      : `Claim strength ${star}`
+                }
+                title={
+                  canReleaseMine
+                    ? "Return this position to the center"
+                    : canSteal
+                      ? `Claim from ${playerName(players, holderId!)}`
+                      : "Claim this position"
+                }
               >
-                <StrengthToken star={star} color={game.chipColor} />
-                <span className="gang-strength-slot__hint">Claim</span>
-              </button>
-            ) : isMine && canRelease ? (
-              <button
-                type="button"
-                className="gang-strength-slot__claim"
-                onClick={() => onGameAction({ type: "gang_claim_strength", star })}
-                aria-label={`Release strength ${star}`}
-                title="Click to release your claim"
-              >
-                <StrengthToken star={star} color={game.chipColor} />
-              </button>
-            ) : !isMine && isClaimed && canClaim && !isLocked ? (
-              <button
-                type="button"
-                className="gang-strength-slot__claim gang-strength-slot__claim--steal"
-                onClick={() => onGameAction({ type: "gang_claim_strength", star })}
-                aria-label={`Steal strength ${star} from ${playerName(players, holderId!)}`}
-                title={`Steal from ${playerName(players, holderId!)}`}
-              >
-                <StrengthToken star={star} color={game.chipColor} />
-                <span className="gang-strength-slot__hint">Steal</span>
+                <PositionToken rank={star} color={game.chipColor} />
+                {canClaimOpen ? (
+                  <span className="gang-strength-slot__hint">Claim</span>
+                ) : canReleaseMine ? (
+                  <span className="gang-strength-slot__hint">Release</span>
+                ) : null}
               </button>
             ) : (
-              <StrengthToken star={star} color={game.chipColor} />
+              <PositionToken rank={star} color={game.chipColor} />
             )}
             {isClaimed ? (
-              isMine && canRelease ? (
-                <button
-                  type="button"
-                  className="gang-strength-slot__name gang-strength-slot__name--release"
-                  onClick={() => onGameAction({ type: "gang_release_strength" })}
-                  title="Click to release your claim"
-                >
-                  {playerName(players, holderId)}
-                </button>
-              ) : !isMine && canClaim ? (
-                <button
-                  type="button"
-                  className="gang-strength-slot__name gang-strength-slot__name--steal"
-                  disabled={!canClaim}
-                  onClick={() => onGameAction({ type: "gang_claim_strength", star })}
-                  title={`Steal from ${playerName(players, holderId!)}`}
-                >
-                  {playerName(players, holderId!)}
-                </button>
-              ) : (
-                <span className="gang-strength-slot__name">
-                  {playerName(players, holderId!)}
-                  {isMine ? " (you)" : ""}
-                </span>
-              )
+              <span className="gang-strength-slot__name">
+                {playerName(players, holderId!)}
+                {isMine ? " (you)" : ""}
+              </span>
             ) : (
               <span className="gang-strength-slot__name gang-strength-slot__name--empty">
                 Open
@@ -396,9 +398,11 @@ export function TheGangScreen({
   const myStrength = strengthHeldBy(game, playerId);
   const canClaim = legal.includes("gang_claim_strength");
   const canRelease = legal.includes("gang_release_strength");
+  const canProceed = legal.includes("gang_proceed_street");
   const waitingPlayers = room.players.filter(
     (player) => strengthHeldBy(game, player.id) === null,
   );
+  const allClaimed = isChipPhase && waitingPlayers.length === 0;
   const showChipRows =
     isChipPhase || isShowdownGate || (game.chipHistory.length > 0 && !isModifierSetup);
 
@@ -471,6 +475,26 @@ export function TheGangScreen({
 
             <InformantCardNotice privateState={privateState} />
 
+            {game.musclePlayerId ? (
+              <SectionPanel aria-label="Muscle specialist">
+                <p className="status gang-muscle-notice">
+                  <strong>Muscle:</strong>{" "}
+                  {playerName(room.players, game.musclePlayerId)} wins ties against
+                  hands of the same category at showdown.
+                </p>
+              </SectionPanel>
+            ) : null}
+
+            {game.getawayDriverDeclaration ? (
+              <SectionPanel aria-label="Getaway Driver declaration">
+                <p className="status">
+                  <strong>Getaway Driver:</strong>{" "}
+                  {playerName(room.players, game.getawayDriverDeclaration.playerId)}{" "}
+                  declared {game.getawayDriverDeclaration.label}.
+                </p>
+              </SectionPanel>
+            ) : null}
+
             {isModifierSetup ? (
               <SpecialistSetupPanel
                 game={game}
@@ -516,7 +540,7 @@ export function TheGangScreen({
               </div>
             </SectionPanel>
 
-            {showChipRows ? (
+            {showChipRows && !isChipPhase ? (
               <SectionPanel aria-label="Player chips">
                 <PlayerChipRows
                   game={game}
@@ -533,26 +557,63 @@ export function TheGangScreen({
                   {PHASE_LABEL[game.phase]} — {CHIP_COLOR_LABEL[game.chipColor]} tokens
                 </h2>
                 <p className="status">
-                  Positions run weakest (1★) to strongest ({game.playerCount}★), left to
-                  right. Claim an open position, steal from another player, or click your
-                  name to release. Everyone must hold a position before the next street.
+                  Positions run weakest (1) to strongest ({game.playerCount}), left to
+                  right. Click a position to claim it or take it from another player.
+                  Click your own position to return it to the center, or claim a new
+                  one to switch. When everyone has claimed, anyone may proceed to the
+                  next street.
                 </p>
 
-                <StrengthBoard
+                <GetawayDriverPanel
                   game={game}
+                  privateState={privateState}
                   players={room.players}
                   playerId={playerId}
-                  canClaim={canClaim}
-                  canRelease={canRelease}
-                  lockedStars={game.lockedStars}
                   onGameAction={onGameAction}
                 />
 
-                {myStrength !== null && waitingPlayers.length > 0 ? (
+                <div className="gang-strength-layout">
+                  <div className="gang-strength-layout__positions">
+                    <h3 className="gang-strength-layout__heading">Positions</h3>
+                    <StrengthBoard
+                      game={game}
+                      players={room.players}
+                      playerId={playerId}
+                      canClaim={canClaim}
+                      canRelease={canRelease}
+                      lockedStars={game.lockedStars}
+                      onGameAction={onGameAction}
+                    />
+                  </div>
+                  <div className="gang-strength-layout__players">
+                    <PlayerChipRows
+                      game={game}
+                      players={room.players}
+                      playerId={playerId}
+                      isChipPhase={isChipPhase}
+                    />
+                  </div>
+                </div>
+
+                {allClaimed ? (
+                  <div className="gang-proceed">
+                    <button
+                      type="button"
+                      className="gang-proceed__button"
+                      disabled={!canProceed}
+                      onClick={() => onGameAction({ type: "gang_proceed_street" })}
+                    >
+                      Proceed
+                    </button>
+                    <p className="gang-proceed__hint status">
+                      Everyone has a position. Any player can proceed to the next street.
+                    </p>
+                  </div>
+                ) : myStrength !== null && waitingPlayers.length > 0 ? (
                   <WaitingStatus
                     message={`Waiting for ${waitingPlayers
                       .map((player) => player.name)
-                      .join(", ")} to claim a strength.`}
+                      .join(", ")} to claim a position.`}
                   />
                 ) : null}
               </SectionPanel>

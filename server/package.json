@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
-    "test": "tsx --test src/games/crew/missions.test.ts src/games/crew/missions.adversarial.test.ts src/games/crew/deck.test.ts src/games/crew/CrewGame.test.ts src/games/crew/CrewGame.adversarial.test.ts src/games/hanabi/HanabiGame.test.ts src/games/pictionary/PictionaryGame.test.ts src/games/fakeArtist/FakeArtistGame.test.ts src/games/telestrations/TelestrationsGame.test.ts src/games/telestrations/TelestrationsGame.adversarial.test.ts src/games/wavelength/WavelengthGame.test.ts src/games/theGang/poker.test.ts src/games/theGang/TheGangGame.test.ts src/rooms/RoomManager.reconnect.test.ts src/rooms/RoomManager.join.test.ts"
+    "test": "tsx --test src/games/crew/missions.test.ts src/games/crew/missions.adversarial.test.ts src/games/crew/deck.test.ts src/games/crew/CrewGame.test.ts src/games/crew/CrewGame.adversarial.test.ts src/games/hanabi/HanabiGame.test.ts src/games/pictionary/PictionaryGame.test.ts src/games/fakeArtist/FakeArtistGame.test.ts src/games/telestrations/TelestrationsGame.test.ts src/games/telestrations/TelestrationsGame.adversarial.test.ts src/games/wavelength/WavelengthGame.test.ts src/games/theGang/poker.test.ts src/games/theGang/modifiers.test.ts src/games/theGang/TheGangGame.test.ts src/games/theGang/TheGangSpecialists.test.ts src/rooms/RoomManager.reconnect.test.ts src/rooms/RoomManager.join.test.ts"
   },
   "keywords": [],
   "author": "",

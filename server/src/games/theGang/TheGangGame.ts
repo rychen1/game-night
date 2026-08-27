@@ -92,6 +92,8 @@ export class TheGangGame implements Game {
   private challengeDrawIndex = 0;
   private specialistDrawIndex = 0;
   private musclePlayerId: string | null = null;
+  private getawayDriverAssigneeId: string | null = null;
+  private getawayDriverDeclaration: { playerId: string; label: string } | null = null;
   private setupState: SetupState | null = null;
   private showdownGate: GangShowdownGate | null = null;
   private informantCards = new Map<string, GangCard>();
@@ -125,6 +127,8 @@ export class TheGangGame implements Game {
     this.challengeDrawIndex = 0;
     this.specialistDrawIndex = 0;
     this.musclePlayerId = null;
+    this.getawayDriverAssigneeId = null;
+    this.getawayDriverDeclaration = null;
     this.setupState = null;
     this.showdownGate = null;
     this.informantCards.clear();
@@ -156,6 +160,12 @@ export class TheGangGame implements Game {
     };
     if (this.musclePlayerId) {
       state.musclePlayerId = this.musclePlayerId;
+    }
+    if (this.getawayDriverAssigneeId) {
+      state.getawayDriverAssigneeId = this.getawayDriverAssigneeId;
+    }
+    if (this.getawayDriverDeclaration) {
+      state.getawayDriverDeclaration = { ...this.getawayDriverDeclaration };
     }
     if (this.setupState) {
       state.specialistSetup = {
@@ -224,6 +234,12 @@ export class TheGangGame implements Game {
       case "gang_release_strength":
         this.releaseStrength(playerId);
         return;
+      case "gang_proceed_street":
+        this.proceedStreet(playerId);
+        return;
+      case "gang_declare_category":
+        this.declareGetawayCategory(playerId, action.category);
+        return;
       default:
         throw new GameError("That action is not valid in this game");
     }
@@ -240,6 +256,9 @@ export class TheGangGame implements Game {
     this.informantCards.delete(playerId);
     if (this.musclePlayerId === playerId) {
       this.musclePlayerId = null;
+    }
+    if (this.getawayDriverAssigneeId === playerId) {
+      this.getawayDriverAssigneeId = null;
     }
     if (this.setupState) {
       this.setupState.pendingPlayerIds = this.setupState.pendingPlayerIds.filter(
@@ -266,9 +285,6 @@ export class TheGangGame implements Game {
       return;
     }
     this.rebuildStrengthClaims();
-    if (PHASE_SEQUENCE.includes(this.phase) && this.allPlayersHoldChip()) {
-      this.maybeAdvancePhase();
-    }
   }
 
   isGameOver(): boolean {
@@ -395,6 +411,8 @@ export class TheGangGame implements Game {
     this.chipColor = "white";
     this.chipHeld.clear();
     this.musclePlayerId = null;
+    this.getawayDriverAssigneeId = null;
+    this.getawayDriverDeclaration = null;
     this.setupState = null;
     this.showdownGate = null;
     this.informantCards.clear();
@@ -480,9 +498,6 @@ export class TheGangGame implements Game {
       case "gang_declare_math_sum":
         this.declareMathSum(playerId, action.sum);
         return;
-      case "gang_declare_category":
-        this.declareCategory(playerId, action.category);
-        return;
       case "gang_declare_rank_count":
         this.declareRankCount(playerId, action.rank, action.count);
         return;
@@ -503,6 +518,11 @@ export class TheGangGame implements Game {
     setup.assigneeId = playerId;
     if (specialistId === "muscle") {
       this.musclePlayerId = playerId;
+      this.finishSetup();
+      return;
+    }
+    if (specialistId === "getawayDriver") {
+      this.getawayDriverAssigneeId = playerId;
       this.finishSetup();
       return;
     }
@@ -609,10 +629,12 @@ export class TheGangGame implements Game {
     this.recordSetupDeclaration(playerId, `Sum ${sum}`);
   }
 
-  private declareCategory(playerId: string, category: GangHandCategory): void {
-    const setup = this.requireSetup();
-    if (setup.specialistId !== "getawayDriver" || setup.assigneeId !== playerId) {
+  private declareGetawayCategory(playerId: string, category: GangHandCategory): void {
+    if (this.getawayDriverAssigneeId !== playerId) {
       throw new GameError("You cannot declare a category right now");
+    }
+    if (!this.canEvaluateHand(playerId)) {
+      throw new GameError("Not enough cards to evaluate your hand yet");
     }
     const evaluated = handStrength(
       this.holeCards[playerId] ?? [],
@@ -621,11 +643,16 @@ export class TheGangGame implements Game {
     if (evaluated.category !== category) {
       throw new GameError("That category does not match your current hand");
     }
-    setup.declarations.push({
+    this.getawayDriverDeclaration = {
       playerId,
       label: categoryLabel(category),
-    });
-    this.finishSetup();
+    };
+    this.getawayDriverAssigneeId = null;
+  }
+
+  private canEvaluateHand(playerId: string): boolean {
+    const holeCount = this.holeCards[playerId]?.length ?? 0;
+    return holeCount + this.communityCards.length >= 5;
   }
 
   private declareRankCount(playerId: string, rank: GangRank, count: number): void {
@@ -791,7 +818,6 @@ export class TheGangGame implements Game {
       }
       this.chipHeld.delete(holder);
       this.chipHeld.set(playerId, star);
-      this.maybeAdvancePhase();
       return;
     }
     if (currentStar !== undefined && this.lockedStars.has(currentStar)) {
@@ -800,6 +826,12 @@ export class TheGangGame implements Game {
     this.chipHeld.set(playerId, star);
     if (shouldLockStar(this.challengeIds(), this.chipColor, star, this.playerOrder.length)) {
       this.lockedStars.add(star);
+    }
+  }
+
+  private proceedStreet(_playerId: string): void {
+    if (!this.allPlayersHoldChip()) {
+      throw new GameError("Not everyone has claimed a strength position yet");
     }
     this.maybeAdvancePhase();
   }
@@ -1066,6 +1098,15 @@ export class TheGangGame implements Game {
       actions.push("gang_release_strength");
     }
     actions.push("gang_claim_strength");
+    if (this.allPlayersHoldChip()) {
+      actions.push("gang_proceed_street");
+    }
+    if (
+      this.getawayDriverAssigneeId === playerId &&
+      this.canEvaluateHand(playerId)
+    ) {
+      actions.push("gang_declare_category");
+    }
     return actions;
   }
 
@@ -1084,9 +1125,6 @@ export class TheGangGame implements Game {
     }
     if (specialistId === "informant" && setup.assigneeId === playerId) {
       actions.push("gang_informant");
-    }
-    if (specialistId === "getawayDriver" && setup.assigneeId === playerId) {
-      actions.push("gang_declare_category");
     }
     if (specialistId === "mastermind" && setup.assigneeId === playerId) {
       actions.push("gang_declare_rank_count");

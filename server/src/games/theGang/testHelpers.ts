@@ -84,6 +84,21 @@ export function setChallengeDrawIndex(game: TheGangGame, index: number): void {
   asInternals(game).challengeDrawIndex = index;
 }
 
+export function proceedStreet(game: TheGangGame, playerId: string): void {
+  game.performAction(playerId, { type: "gang_proceed_street" });
+}
+
+export function claimRound(
+  game: TheGangGame,
+  playerIds: string[],
+  stars: number[],
+): void {
+  playerIds.forEach((playerId, index) => {
+    game.performAction(playerId, { type: "gang_claim_strength", star: stars[index]! });
+  });
+  proceedStreet(game, playerIds[0]!);
+}
+
 export function card(
   rank: GangCard["rank"],
   suit: GangCard["suit"],

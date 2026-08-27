@@ -54,6 +54,68 @@ function HoleCardButton({
   );
 }
 
+function specialistLabel(game: GangPublicState, specialistId: string): string {
+  const fromActive = game.activeModifiers.find(
+    (modifier) => modifier.kind === "specialist" && modifier.id === specialistId,
+  );
+  return fromActive?.name ?? specialistId;
+}
+
+export function GetawayDriverPanel({
+  game,
+  privateState,
+  players,
+  playerId,
+  onGameAction,
+}: {
+  game: GangPublicState;
+  privateState: GangPrivateState | null;
+  players: PublicPlayer[];
+  playerId: string;
+  onGameAction: (action: GameAction) => void;
+}) {
+  const legal = privateState?.legalActions ?? [];
+  const assigneeId = game.getawayDriverAssigneeId;
+  if (!assigneeId) {
+    return null;
+  }
+
+  const assigneeName = playerName(players, assigneeId);
+  const canDeclare = legal.includes("gang_declare_category");
+  const isAssignee = assigneeId === playerId;
+
+  return (
+    <div className="gang-getaway-panel">
+      <p className="status">
+        <strong>Getaway Driver:</strong> {assigneeName} must declare their current
+        hand category once enough cards are revealed.
+      </p>
+      {canDeclare ? (
+        <div className="gang-setup-actions gang-setup-actions--grid">
+          {HAND_CATEGORIES.map((entry) => (
+            <button
+              key={entry.value}
+              type="button"
+              className="secondary"
+              onClick={() =>
+                onGameAction({ type: "gang_declare_category", category: entry.value })
+              }
+            >
+              {entry.label}
+            </button>
+          ))}
+        </div>
+      ) : isAssignee ? (
+        <p className="status">
+          Wait for more community cards before declaring your hand category.
+        </p>
+      ) : (
+        <WaitingStatus message={`Waiting for ${assigneeName} to declare their hand.`} />
+      )}
+    </div>
+  );
+}
+
 export function SpecialistSetupPanel({
   game,
   privateState,
@@ -73,11 +135,16 @@ export function SpecialistSetupPanel({
     return null;
   }
 
+  const specialistName = specialistLabel(game, setup.specialistId);
+
   return (
     <SectionPanel aria-label="Specialist setup" emphasis>
-      <h2 className="gang-section-title">Specialist setup</h2>
+      <h2 className="gang-section-title">{specialistName}</h2>
       <p className="status">
         Resolve the active specialist before strength positions begin.
+        {setup.specialistId === "getawayDriver"
+          ? " The Getaway Driver will declare their hand category later, once community cards are out."
+          : ""}
       </p>
 
       {setup.declarations.length > 0 ? (
@@ -263,6 +330,11 @@ export function ShowdownGatePanel({
 
   const targetName = playerName(players, gate.targetPlayerId);
   const isTarget = gate.targetPlayerId === playerId;
+  const guessers = players.filter((player) => player.id !== gate.targetPlayerId);
+  const submittedNames = gate.submittedPlayerIds.map((id) => playerName(players, id));
+  const waitingNames = guessers
+    .filter((player) => !gate.submittedPlayerIds.includes(player.id))
+    .map((player) => player.name);
 
   return (
     <SectionPanel aria-label="Showdown gate" emphasis>
@@ -272,6 +344,15 @@ export function ShowdownGatePanel({
           ? `Before ${targetName} reveals, agree on a pocket rank they hold.`
           : `Before ${targetName} reveals, agree on their hand category.`}
       </p>
+      {submittedNames.length > 0 ? (
+        <p className="status">
+          Confirmed: {submittedNames.join(", ")} ({submittedNames.length}/
+          {guessers.length})
+        </p>
+      ) : null}
+      {waitingNames.length > 0 && !isTarget ? (
+        <p className="status">Still guessing: {waitingNames.join(", ")}</p>
+      ) : null}
       {gate.agreedRank ? (
         <p className="status">Agreed rank: {rankLabel(gate.agreedRank)}</p>
       ) : null}

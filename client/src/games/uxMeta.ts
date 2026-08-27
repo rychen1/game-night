@@ -138,7 +138,7 @@ const HOW_TO_PLAY: Record<GameId, GameHowToPlay> = {
     objective:
       "Pull off three heists before three alarms — without discussing your cards.",
     turnStructure:
-      "Each heist is a Hold'em hand: claim or steal a strength position at pre-flop, flop, turn, and river.",
+      "Each heist is a Hold'em hand: claim or take a strength position at pre-flop, flop, turn, and river, then proceed when everyone has claimed.",
     winCondition:
       "Open three vaults (successful heists) before three alarms (failed heists).",
   },

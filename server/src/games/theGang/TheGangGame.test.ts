@@ -6,6 +6,8 @@ import {
   asInternals,
   assignChips,
   card,
+  claimRound,
+  proceedStreet,
   setActiveModifiers,
   setCommunity,
   setHoleCards,
@@ -130,36 +132,47 @@ describe("TheGangGame strength actions", () => {
     assert.deepEqual(pub.chipCenter.sort(), [1, 3]);
   });
 
-  it("advances only when every player has claimed a strength", () => {
+  it("does not advance until a player proceeds after everyone has claimed", () => {
     const game = new TheGangGame();
     setupFixedOrder(game, [P1, P2, P3]);
     game.performAction(P1, { type: "gang_claim_strength", star: 1 });
     assert.equal(game.getPublicState().phase, "PREFLOP");
     game.performAction(P2, { type: "gang_claim_strength", star: 2 });
     game.performAction(P3, { type: "gang_claim_strength", star: 3 });
-    assert.equal(game.getPublicState().phase, "FLOP");
-    assert.equal(game.getPublicState().chipColor, "yellow");
-    assert.equal(game.getPublicState().communityCards.length, 3);
+    assert.equal(game.getPublicState().phase, "PREFLOP");
+    assert.equal(game.getPrivateState(P2).legalActions.includes("gang_proceed_street"), true);
+
+    proceedStreet(game, P2);
+
+    const pub = game.getPublicState();
+    assert.equal(pub.phase, "FLOP");
+    assert.equal(pub.chipColor, "yellow");
+    assert.equal(pub.communityCards.length, 3);
+  });
+
+  it("rejects proceed before everyone has claimed", () => {
+    const game = new TheGangGame();
+    setupFixedOrder(game, [P1, P2, P3]);
+    game.performAction(P1, { type: "gang_claim_strength", star: 1 });
+    game.performAction(P2, { type: "gang_claim_strength", star: 2 });
+    assert.throws(
+      () => proceedStreet(game, P1),
+      (error: unknown) =>
+        error instanceof GameError &&
+        error.message === "Not everyone has claimed a strength position yet",
+    );
   });
 
   it("reveals community cards through flop, turn, and river", () => {
     const game = new TheGangGame();
     setupFixedOrder(game, [P1, P2, P3]);
-    const claimRound = (stars: number[]) => {
-      stars.forEach((star, index) => {
-        game.performAction([P1, P2, P3][index]!, {
-          type: "gang_claim_strength",
-          star,
-        });
-      });
-    };
-    claimRound([1, 2, 3]);
+    claimRound(game, [P1, P2, P3], [1, 2, 3]);
     assert.equal(game.getPublicState().communityCards.length, 3);
-    claimRound([1, 2, 3]);
+    claimRound(game, [P1, P2, P3], [1, 2, 3]);
     assert.equal(game.getPublicState().communityCards.length, 4);
-    claimRound([1, 2, 3]);
+    claimRound(game, [P1, P2, P3], [1, 2, 3]);
     assert.equal(game.getPublicState().communityCards.length, 5);
-    claimRound([1, 2, 3]);
+    claimRound(game, [P1, P2, P3], [1, 2, 3]);
     assert.equal(game.getPublicState().phase, "PREFLOP");
     assert.equal(game.getPublicState().heistNumber, 2);
   });
@@ -313,7 +326,7 @@ describe("TheGangGame hidden information", () => {
 });
 
 describe("TheGangGame onPlayerRemoved", () => {
-  it("advances the phase when the last unclaimed player leaves", () => {
+  it("does not advance when the last unclaimed player leaves without proceed", () => {
     const game = new TheGangGame();
     setupFixedOrder(game, [P1, P2, P3, P4]);
     game.performAction(P1, { type: "gang_claim_strength", star: 1 });
@@ -323,10 +336,18 @@ describe("TheGangGame onPlayerRemoved", () => {
     game.onPlayerRemoved(P4);
 
     const pub = game.getPublicState();
-    assert.equal(pub.phase, "FLOP");
-    assert.equal(pub.chipColor, "yellow");
-    assert.equal(pub.communityCards.length, 3);
-    assert.equal(pub.chipHeld.length, 0);
+    assert.equal(pub.phase, "PREFLOP");
+    assert.equal(pub.chipColor, "white");
+    assert.equal(pub.communityCards.length, 0);
+    assert.equal(pub.chipHeld.length, 3);
+
+    proceedStreet(game, P1);
+
+    const advanced = game.getPublicState();
+    assert.equal(advanced.phase, "FLOP");
+    assert.equal(advanced.chipColor, "yellow");
+    assert.equal(advanced.communityCards.length, 3);
+    assert.equal(advanced.chipHeld.length, 0);
   });
 
   it("reclaims star values above the remaining player count", () => {
@@ -582,20 +603,11 @@ describe("TheGangGame modes and modifiers", () => {
     setupFixedOrder(game, [P1, P2, P3]);
     setActiveModifiers(game, [{ kind: "challenge", id: "hastyGetaway" }]);
 
-    const claimRound = (stars: number[]) => {
-      stars.forEach((star, index) => {
-        game.performAction([P1, P2, P3][index]!, {
-          type: "gang_claim_strength",
-          star,
-        });
-      });
-    };
-
-    claimRound([1, 2, 3]);
+    claimRound(game, [P1, P2, P3], [1, 2, 3]);
     assert.equal(game.getPublicState().phase, "FLOP");
     assert.equal(game.getPublicState().communityCards.length, 3);
 
-    claimRound([1, 2, 3]);
+    claimRound(game, [P1, P2, P3], [1, 2, 3]);
     const pub = game.getPublicState();
     assert.equal(pub.phase, "RIVER");
     assert.equal(pub.chipColor, "red");
