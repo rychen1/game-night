@@ -3395,6 +3395,24 @@ button.hanabi-card {
   gap: 8px;
 }
 
+.gang-informant-tip__card {
+  width: fit-content;
+}
+
+.gang-review__reveal--correct {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.gang-review__reveal--incorrect {
+  background: color-mix(in srgb, var(--danger, #c44) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger, #c44) 35%, transparent);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
 .gang-card {
   display: inline-flex;
   flex-direction: column;
@@ -3431,23 +3449,11 @@ button.hanabi-card {
   margin-top: 4px;
 }
 
-.gang-strength-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-  gap: 24px;
-  align-items: start;
-  margin-top: 12px;
-}
-
 .gang-strength-layout__heading {
-  margin: 0 0 8px;
+  margin: 12px 0 8px;
   font-size: var(--type-meta);
   font-weight: 600;
   color: var(--text-h);
-}
-
-.gang-strength-layout__positions .gang-strength-board {
-  justify-content: flex-start;
 }
 
 .gang-position-token {
@@ -3506,16 +3512,6 @@ button.hanabi-card {
 .gang-proceed__hint {
   margin: 0;
   text-align: center;
-}
-
-@media (max-width: 720px) {
-  .gang-strength-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .gang-strength-layout__positions .gang-strength-board {
-    justify-content: center;
-  }
 }
 
 .gang-chip-rows {

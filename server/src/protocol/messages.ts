@@ -471,6 +471,7 @@ export type GangHeistReveal = {
   playerId: string;
   star: number;
   hand: GangHandView;
+  rankingCorrect: boolean;
 };
 
 export type GangHeistResult = {

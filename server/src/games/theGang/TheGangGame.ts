@@ -553,8 +553,15 @@ export class TheGangGame implements Game {
     if (!this.active.has(targetPlayerId) || targetPlayerId === playerId) {
       throw new GameError("Invalid Informant target");
     }
-    const card = this.pickHoleCard(playerId, cardIndex);
-    this.informantCards.set(targetPlayerId, card);
+    const hole = this.holeCards[playerId];
+    if (!hole || cardIndex < 0 || cardIndex >= hole.length) {
+      throw new GameError("Invalid card selection");
+    }
+    const shared = hole[cardIndex];
+    if (!shared) {
+      throw new GameError("Invalid card selection");
+    }
+    this.informantCards.set(targetPlayerId, cloneCards([shared])[0]!);
     this.finishSetup();
   }
 
@@ -1004,10 +1011,24 @@ export class TheGangGame implements Game {
       this.alarms += 1;
     }
 
+    const rankingCorrect = reveals.map((_, index) => {
+      if (index === 0) {
+        return true;
+      }
+      const cmp = compareForShowdown(
+        reveals[index]!.evaluated,
+        reveals[index - 1]!.evaluated,
+        reveals[index]!.entry.playerId,
+        reveals[index - 1]!.entry.playerId,
+        this.musclePlayerId,
+      );
+      return cmp >= 0;
+    });
+
     const heistResult: GangHeistResult = {
       heistNumber: this.heistNumber,
       success,
-      reveals: reveals.map(({ entry, view }) => ({
+      reveals: reveals.map(({ entry, view }, index) => ({
         playerId: entry.playerId,
         star: entry.star,
         hand: {
@@ -1015,6 +1036,7 @@ export class TheGangGame implements Game {
           label: view.label,
           cards: cloneCards(view.cards),
         },
+        rankingCorrect: rankingCorrect[index]!,
       })),
       vaultsOpened: this.vaultsOpened,
       alarms: this.alarms,

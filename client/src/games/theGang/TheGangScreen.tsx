@@ -355,7 +355,14 @@ function HeistReview({
         {[...heist.reveals]
           .sort((a, b) => a.star - b.star)
           .map((reveal) => (
-            <li key={`${heist.heistNumber}-${reveal.playerId}`}>
+            <li
+              key={`${heist.heistNumber}-${reveal.playerId}`}
+              className={
+                reveal.rankingCorrect
+                  ? "gang-review__reveal gang-review__reveal--correct"
+                  : "gang-review__reveal gang-review__reveal--incorrect"
+              }
+            >
               <StrengthToken star={reveal.star} color="red" />
               <span className="gang-review__player">
                 {playerName(players, reveal.playerId)}
@@ -572,28 +579,16 @@ export function TheGangScreen({
                   onGameAction={onGameAction}
                 />
 
-                <div className="gang-strength-layout">
-                  <div className="gang-strength-layout__positions">
-                    <h3 className="gang-strength-layout__heading">Positions</h3>
-                    <StrengthBoard
-                      game={game}
-                      players={room.players}
-                      playerId={playerId}
-                      canClaim={canClaim}
-                      canRelease={canRelease}
-                      lockedStars={game.lockedStars}
-                      onGameAction={onGameAction}
-                    />
-                  </div>
-                  <div className="gang-strength-layout__players">
-                    <PlayerChipRows
-                      game={game}
-                      players={room.players}
-                      playerId={playerId}
-                      isChipPhase={isChipPhase}
-                    />
-                  </div>
-                </div>
+                <h3 className="gang-strength-layout__heading">Positions</h3>
+                <StrengthBoard
+                  game={game}
+                  players={room.players}
+                  playerId={playerId}
+                  canClaim={canClaim}
+                  canRelease={canRelease}
+                  lockedStars={game.lockedStars}
+                  onGameAction={onGameAction}
+                />
 
                 {allClaimed ? (
                   <div className="gang-proceed">
@@ -616,6 +611,17 @@ export function TheGangScreen({
                       .join(", ")} to claim a position.`}
                   />
                 ) : null}
+              </SectionPanel>
+            ) : null}
+
+            {isChipPhase ? (
+              <SectionPanel aria-label="Player chips">
+                <PlayerChipRows
+                  game={game}
+                  players={room.players}
+                  playerId={playerId}
+                  isChipPhase={isChipPhase}
+                />
               </SectionPanel>
             ) : null}
 

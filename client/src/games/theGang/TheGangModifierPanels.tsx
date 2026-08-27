@@ -399,6 +399,26 @@ export function ShowdownGatePanel({
   );
 }
 
+function InformantTipCard({ card }: { card: GangCard }) {
+  if (card.jackSpecialist) {
+    return (
+      <span className="gang-card" aria-label="Jack specialist">
+        <span className="gang-card__rank">J*</span>
+      </span>
+    );
+  }
+  const red = isRedSuit(card.suit!);
+  return (
+    <span
+      className={`gang-card${red ? " gang-card--red" : ""}`}
+      aria-label={cardLabel(card)}
+    >
+      <span className="gang-card__rank">{rankLabel(card.rank)}</span>
+      <span className="gang-card__suit">{suitSymbol(card.suit!)}</span>
+    </span>
+  );
+}
+
 export function InformantCardNotice({
   privateState,
 }: {
@@ -412,7 +432,9 @@ export function InformantCardNotice({
     <SectionPanel aria-label="Informant tip">
       <h2 className="gang-section-title">Informant tip</h2>
       <p className="status">A teammate secretly showed you one card:</p>
-      <span className="gang-card">{cardLabel(card)}</span>
+      <div className="gang-card-row gang-informant-tip__card">
+        <InformantTipCard card={card} />
+      </div>
     </SectionPanel>
   );
 }

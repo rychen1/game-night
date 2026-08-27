@@ -70,6 +70,10 @@ describe("The Gang specialist cards", () => {
 
     const tip = game.getPrivateState(P2).informantCard;
     assert.deepEqual(tip, card(14, "spades"));
+    assert.deepEqual(game.getPrivateState(P1).holeCards, [
+      card(14, "spades"),
+      card(2, "clubs"),
+    ]);
     assert.equal(game.getPublicState().phase, "PREFLOP");
   });
 
@@ -203,6 +207,7 @@ describe("The Gang showdown gates", () => {
     const pub = game.getPublicState();
     assert.equal(pub.lastHeist?.success, false);
     assert.equal(pub.alarms, 1);
+    assert.ok(pub.lastHeist?.reveals.every((reveal) => reveal.rankingCorrect));
   });
 
   it("passes Retina Scan when the agreed rank is in the target pocket", () => {
@@ -257,6 +262,9 @@ describe("The Gang showdown gates", () => {
     game.advancePhaseForTests();
 
     assert.equal(game.getPublicState().lastHeist?.success, false);
+    assert.ok(
+      game.getPublicState().lastHeist?.reveals.every((reveal) => reveal.rankingCorrect),
+    );
   });
 
   it("passes Fingerprint Scan when the agreed category matches", () => {

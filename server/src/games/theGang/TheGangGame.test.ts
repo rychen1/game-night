@@ -202,6 +202,7 @@ describe("TheGangGame heists", () => {
     assert.equal(pub.vaultsOpened, 1);
     assert.equal(pub.alarms, 0);
     assert.equal(pub.phase, "PREFLOP");
+    assert.ok(pub.lastHeist?.reveals.every((reveal) => reveal.rankingCorrect));
   });
 
   it("accepts equal hands in showdown ordering", () => {
@@ -246,6 +247,9 @@ describe("TheGangGame heists", () => {
     assert.equal(game.getPublicState().lastHeist?.success, false);
     assert.equal(game.getPublicState().vaultsOpened, 0);
     assert.equal(game.getPublicState().alarms, 1);
+    assert.ok(
+      game.getPublicState().lastHeist?.reveals.some((reveal) => !reveal.rankingCorrect),
+    );
   });
 
   it("ends the game after 3 vaults", () => {
