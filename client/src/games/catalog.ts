@@ -48,6 +48,14 @@ export const GAME_CATALOG: GameCatalogEntry[] = [
     minPlayers: 2,
     maxPlayers: 5,
   },
+  {
+    id: "wavelength",
+    title: "Wavelength",
+    description:
+      "Give a clue on a spectrum; teammates guess where the hidden target lies.",
+    minPlayers: 3,
+    maxPlayers: 10,
+  },
 ];
 
 export type GameGenre = "drawingGuessing" | "cooperative";
@@ -63,6 +71,7 @@ export const HOME_GAME_GENRE: Record<GameId, GameGenreInfo> = {
   fakeArtist: { genre: "drawingGuessing", label: "Drawing & Guessing" },
   hanabi: { genre: "cooperative", label: "Cooperative" },
   crew: { genre: "cooperative", label: "Cooperative" },
+  wavelength: { genre: "drawingGuessing", label: "Party & Guessing" },
 };
 
 /** Home launcher display order (two-column grid: row-major). */
@@ -70,6 +79,7 @@ export const HOME_GAME_ORDER: GameId[] = [
   "pictionary",
   "telestrations",
   "fakeArtist",
+  "wavelength",
   "hanabi",
   "crew",
 ];

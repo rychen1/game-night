@@ -7,19 +7,22 @@ export type GameId =
   | "telestrations"
   | "pictionary"
   | "hanabi"
-  | "crew";
+  | "crew"
+  | "wavelength";
 
 export type FakeArtistSettings = { kind: "fakeArtist" };
 export type TelestrationsSettings = { kind: "telestrations" };
 export type PictionarySettings = { kind: "pictionary" };
 export type HanabiSettings = { kind: "hanabi" };
 export type CrewSettings = { kind: "crew" };
+export type WavelengthSettings = { kind: "wavelength" };
 export type GameSettings =
   | FakeArtistSettings
   | TelestrationsSettings
   | PictionarySettings
   | HanabiSettings
-  | CrewSettings;
+  | CrewSettings
+  | WavelengthSettings;
 
 export type GameSetupField =
   | { key: string; type: "boolean"; label: string }
@@ -364,20 +367,66 @@ export type CrewPrivateState = {
   communicableOptions?: CrewCommunicableOption[];
 };
 
+export type WavelengthPhase = "CLUE" | "GUESSING" | "RESULTS" | "ABORTED";
+
+export type WavelengthActionType = "submit_clue" | "submit_spectrum_guess";
+
+export type WavelengthGuess = {
+  playerId: string;
+  position: number;
+};
+
+export type WavelengthRoundResult = {
+  round: number;
+  clueGiverId: string;
+  leftLabel: string;
+  rightLabel: string;
+  target: number;
+  clue: string;
+  guesses: WavelengthGuess[];
+  guessScores: Record<string, number>;
+  roundScore: number;
+};
+
+export type WavelengthPublicState = {
+  kind: "wavelength";
+  phase: WavelengthPhase;
+  round: number;
+  totalRounds: number;
+  clueGiverId: string;
+  leftLabel: string;
+  rightLabel: string;
+  clue: string | null;
+  submittedGuesserIds: string[];
+  totalScore: number;
+  lastReveal?: WavelengthRoundResult;
+  history?: WavelengthRoundResult[];
+};
+
+export type WavelengthPrivateState = {
+  kind: "wavelength";
+  role: "clueGiver" | "guesser";
+  legalActions: WavelengthActionType[];
+  target?: number;
+  myGuess?: number;
+};
+
 export type PublicGameState =
   | DummyPublicState
   | FakeArtistPublicState
   | TelestrationsPublicState
   | PictionaryPublicState
   | HanabiPublicState
-  | CrewPublicState;
+  | CrewPublicState
+  | WavelengthPublicState;
 export type PrivateGameState =
   | DummyPrivateState
   | FakeArtistPrivateState
   | TelestrationsPrivateState
   | PictionaryPrivateState
   | HanabiPrivateState
-  | CrewPrivateState;
+  | CrewPrivateState
+  | WavelengthPrivateState;
 
 export type FakeArtistActionType = "submit_stroke" | "vote" | "guess_word";
 
@@ -404,6 +453,11 @@ export type CrewCommunicateAction = {
   signal: CrewSignal;
   attribute: CrewAttribute;
 };
+export type SubmitClueAction = { type: "submit_clue"; clue: string };
+export type SubmitSpectrumGuessAction = {
+  type: "submit_spectrum_guess";
+  position: number;
+};
 export type GameAction =
   | SubmitStrokeAction
   | VoteAction
@@ -415,7 +469,9 @@ export type GameAction =
   | DiscardCardAction
   | CrewBeginMissionAction
   | CrewPlayCardAction
-  | CrewCommunicateAction;
+  | CrewCommunicateAction
+  | SubmitClueAction
+  | SubmitSpectrumGuessAction;
 
 export type RoomStatePayload = {
   roomCode: string;

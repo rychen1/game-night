@@ -11,6 +11,7 @@ import { FakeArtistGame } from "./fakeArtist/FakeArtistGame.ts";
 import { HanabiGame } from "./hanabi/HanabiGame.ts";
 import { PictionaryGame } from "./pictionary/PictionaryGame.ts";
 import { TelestrationsGame } from "./telestrations/TelestrationsGame.ts";
+import { WavelengthGame } from "./wavelength/WavelengthGame.ts";
 
 type GameMeta = {
   title: string;
@@ -65,6 +66,15 @@ const GAMES: Record<GameId, GameMeta> = {
     maxPlayers: 5,
     fields: [],
     create: () => new CrewGame(),
+  },
+  wavelength: {
+    title: "Wavelength",
+    description:
+      "Give a clue on a spectrum; teammates guess where the hidden target lies.",
+    minPlayers: 3,
+    maxPlayers: 10,
+    fields: [],
+    create: () => new WavelengthGame(),
   },
 };
 

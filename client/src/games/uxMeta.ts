@@ -59,6 +59,12 @@ const UX_FLAGS: Record<
     hasEndReview: true,
     hasConventionalScoring: false,
   },
+  wavelength: {
+    usesTimer: false,
+    hasGameplayHistory: true,
+    hasEndReview: true,
+    hasConventionalScoring: true,
+  },
 };
 
 /**
@@ -114,6 +120,14 @@ const HOW_TO_PLAY: Record<GameId, GameHowToPlay> = {
       "Review tasks, optionally communicate once, then play tricks following suit.",
     winCondition: "Succeed or fail the mission—there is no numeric score.",
   },
+  wavelength: {
+    objective:
+      "Work together to find a hidden target on a spectrum using a single clue.",
+    turnStructure:
+      "Each player gives one clue; everyone else guesses where the target lies.",
+    winCondition:
+      "Score points for accurate guesses across every player's clue-giving turn.",
+  },
 };
 
 const OFFICIAL_RULEBOOKS: Record<GameId, OfficialRulebook> = {
@@ -136,6 +150,10 @@ const OFFICIAL_RULEBOOKS: Record<GameId, OfficialRulebook> = {
   telestrations: {
     url: "https://cdn.shopify.com/s/files/1/0611/3958/3198/files/Compressed_Telestrations_8P_Rules_2025-1.pdf",
     label: "The Op — Telestrations 8 Player (PDF)",
+  },
+  wavelength: {
+    url: "https://www.wavelength.zone/how-to-play",
+    label: "Palm Court — Wavelength (how to play)",
   },
 };
 

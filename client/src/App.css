@@ -3175,6 +3175,163 @@ button.hanabi-card {
 
 /* —— Accessibility conventions —— */
 
+.crew-review__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* —— Wavelength —— */
+
+.wavelength-spectrum {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wavelength-spectrum__labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--font-ui);
+  font-size: var(--type-ui);
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.wavelength-spectrum__interactive {
+  padding: 8px 0 28px;
+}
+
+.wavelength-spectrum__interactive.is-interactive {
+  cursor: pointer;
+}
+
+.wavelength-spectrum__track {
+  position: relative;
+  height: 14px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f97316, #fde68a 35%, #93c5fd 65%, #2563eb);
+  border: 1px solid var(--border);
+}
+
+.wavelength-spectrum__marker {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.wavelength-spectrum__marker-pin {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: var(--text);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 20%);
+}
+
+.wavelength-spectrum__marker--target .wavelength-spectrum__marker-pin {
+  background: #059669;
+}
+
+.wavelength-spectrum__marker--self .wavelength-spectrum__marker-pin {
+  background: #7c3aed;
+}
+
+.wavelength-spectrum__marker--guess .wavelength-spectrum__marker-pin {
+  background: #2563eb;
+}
+
+.wavelength-spectrum__marker-label {
+  position: absolute;
+  top: 18px;
+  white-space: nowrap;
+  font-size: var(--type-meta);
+  color: var(--text);
+}
+
+.wavelength-clue-form {
+  width: 100%;
+}
+
+.wavelength-clue-display,
+.wavelength-review__clue,
+.wavelength-review__lede {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--type-ui);
+  line-height: var(--lh-body);
+}
+
+.wavelength-section-title,
+.wavelength-review__round-title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--type-section);
+  font-weight: 600;
+  letter-spacing: var(--track-section);
+  color: var(--text-h);
+}
+
+.wavelength-last-reveal,
+.wavelength-review__round {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.wavelength-review__gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.wavelength-review__scores {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--type-meta);
+}
+
+.wavelength-history {
+  margin: 0;
+  padding: 0;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--type-meta);
+  line-height: var(--lh-body);
+}
+
+.wavelength-history summary {
+  cursor: pointer;
+  color: var(--text-h);
+  font-family: var(--font-ui);
+  font-size: var(--type-section);
+  font-weight: 600;
+  letter-spacing: var(--track-section);
+}
+
+.wavelength-history__list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 10rem;
+  overflow-y: auto;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

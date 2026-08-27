@@ -25,6 +25,7 @@ import { FakeArtistScreen } from "./games/fakeArtist/FakeArtistScreen.tsx";
 import { HanabiScreen } from "./games/hanabi/HanabiScreen.tsx";
 import { PictionaryScreen } from "./games/pictionary/PictionaryScreen.tsx";
 import { TelestrationsScreen } from "./games/telestrations/TelestrationsScreen.tsx";
+import { WavelengthScreen } from "./games/wavelength/WavelengthScreen.tsx";
 import {
   connectionStateFromFlags,
 } from "./components/ConnectionStatus.tsx";
@@ -374,6 +375,25 @@ function App() {
           game={room.publicGame}
           privateState={
             privateState?.kind === "fakeArtist" ? privateState : null
+          }
+          error={error}
+          onLeaveRoom={() => send({ type: "leave_room" })}
+          onReturnToLobby={() => send({ type: "return_to_lobby" })}
+          onPlayAgain={() => send({ type: "play_again" })}
+          onSetReady={(ready) => send({ type: "set_ready", ready })}
+          onGameAction={(action: GameAction) =>
+            send({ type: "game_action", action })
+          }
+        />
+      );
+    } else if (room.publicGame?.kind === "wavelength") {
+      screen = (
+        <WavelengthScreen
+          playerId={playerId}
+          room={room}
+          game={room.publicGame}
+          privateState={
+            privateState?.kind === "wavelength" ? privateState : null
           }
           error={error}
           onLeaveRoom={() => send({ type: "leave_room" })}
