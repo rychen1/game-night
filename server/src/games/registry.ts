@@ -12,6 +12,7 @@ import { HanabiGame } from "./hanabi/HanabiGame.ts";
 import { PictionaryGame } from "./pictionary/PictionaryGame.ts";
 import { TelestrationsGame } from "./telestrations/TelestrationsGame.ts";
 import { WavelengthGame } from "./wavelength/WavelengthGame.ts";
+import { TheGangGame } from "./theGang/TheGangGame.ts";
 
 type GameMeta = {
   title: string;
@@ -75,6 +76,15 @@ const GAMES: Record<GameId, GameMeta> = {
     maxPlayers: 10,
     fields: [],
     create: () => new WavelengthGame(),
+  },
+  theGang: {
+    title: "The Gang",
+    description:
+      "Cooperative Texas Hold'em: rank your hand with chips and pull off three heists.",
+    minPlayers: 3,
+    maxPlayers: 6,
+    fields: [],
+    create: () => new TheGangGame(),
   },
 };
 

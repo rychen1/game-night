@@ -8,7 +8,8 @@ export type GameId =
   | "pictionary"
   | "hanabi"
   | "crew"
-  | "wavelength";
+  | "wavelength"
+  | "theGang";
 
 export type FakeArtistSettings = { kind: "fakeArtist" };
 export type TelestrationsSettings = { kind: "telestrations" };
@@ -16,13 +17,15 @@ export type PictionarySettings = { kind: "pictionary" };
 export type HanabiSettings = { kind: "hanabi" };
 export type CrewSettings = { kind: "crew" };
 export type WavelengthSettings = { kind: "wavelength" };
+export type TheGangSettings = { kind: "theGang" };
 export type GameSettings =
   | FakeArtistSettings
   | TelestrationsSettings
   | PictionarySettings
   | HanabiSettings
   | CrewSettings
-  | WavelengthSettings;
+  | WavelengthSettings
+  | TheGangSettings;
 
 export type GameSetupField =
   | { key: string; type: "boolean"; label: string }
@@ -411,6 +414,95 @@ export type WavelengthPrivateState = {
   myGuess?: number;
 };
 
+export type GangSuit = "clubs" | "diamonds" | "hearts" | "spades";
+
+export type GangRank = 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14;
+
+export type GangCard = {
+  suit: GangSuit;
+  rank: GangRank;
+};
+
+export type GangHandCategory =
+  | "high_card"
+  | "pair"
+  | "two_pair"
+  | "three_kind"
+  | "straight"
+  | "flush"
+  | "full_house"
+  | "four_kind"
+  | "straight_flush";
+
+export type GangHandView = {
+  category: GangHandCategory;
+  label: string;
+  cards: GangCard[];
+};
+
+export type GangPhase =
+  | "PREFLOP"
+  | "FLOP"
+  | "TURN"
+  | "RIVER"
+  | "SHOWDOWN"
+  | "RESULTS"
+  | "ABORTED";
+
+export type GangChipColor = "white" | "yellow" | "orange" | "red";
+
+export type GangChipSelection = {
+  playerId: string;
+  star: number;
+};
+
+export type GangChipSnapshot = {
+  color: GangChipColor;
+  held: GangChipSelection[];
+};
+
+export type GangHeistReveal = {
+  playerId: string;
+  star: number;
+  hand: GangHandView;
+};
+
+export type GangHeistResult = {
+  heistNumber: number;
+  success: boolean;
+  reveals: GangHeistReveal[];
+  vaultsOpened: number;
+  alarms: number;
+};
+
+export type GangPublicState = {
+  kind: "theGang";
+  phase: GangPhase;
+  heistNumber: number;
+  vaultsOpened: number;
+  alarms: number;
+  playerCount: number;
+  communityCards: GangCard[];
+  chipColor: GangChipColor;
+  chipHeld: GangChipSelection[];
+  chipCenter: number[];
+  chipHistory: GangChipSnapshot[];
+  lastHeist?: GangHeistResult;
+  history?: GangHeistResult[];
+  endReason?: "won" | "lost";
+};
+
+export type TheGangActionType =
+  | "gang_take_center"
+  | "gang_take_from_player"
+  | "gang_return_chip";
+
+export type GangPrivateState = {
+  kind: "theGang";
+  holeCards: GangCard[];
+  legalActions: TheGangActionType[];
+};
+
 export type PublicGameState =
   | DummyPublicState
   | FakeArtistPublicState
@@ -418,7 +510,8 @@ export type PublicGameState =
   | PictionaryPublicState
   | HanabiPublicState
   | CrewPublicState
-  | WavelengthPublicState;
+  | WavelengthPublicState
+  | GangPublicState;
 export type PrivateGameState =
   | DummyPrivateState
   | FakeArtistPrivateState
@@ -426,7 +519,8 @@ export type PrivateGameState =
   | PictionaryPrivateState
   | HanabiPrivateState
   | CrewPrivateState
-  | WavelengthPrivateState;
+  | WavelengthPrivateState
+  | GangPrivateState;
 
 export type FakeArtistActionType = "submit_stroke" | "vote" | "guess_word";
 
@@ -458,6 +552,12 @@ export type SubmitSpectrumGuessAction = {
   type: "submit_spectrum_guess";
   position: number;
 };
+export type GangTakeCenterAction = { type: "gang_take_center"; star: number };
+export type GangTakeFromPlayerAction = {
+  type: "gang_take_from_player";
+  fromPlayerId: string;
+};
+export type GangReturnChipAction = { type: "gang_return_chip" };
 export type GameAction =
   | SubmitStrokeAction
   | VoteAction
@@ -471,7 +571,10 @@ export type GameAction =
   | CrewPlayCardAction
   | CrewCommunicateAction
   | SubmitClueAction
-  | SubmitSpectrumGuessAction;
+  | SubmitSpectrumGuessAction
+  | GangTakeCenterAction
+  | GangTakeFromPlayerAction
+  | GangReturnChipAction;
 
 export type RoomStatePayload = {
   roomCode: string;

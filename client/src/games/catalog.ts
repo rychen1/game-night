@@ -56,6 +56,14 @@ export const GAME_CATALOG: GameCatalogEntry[] = [
     minPlayers: 3,
     maxPlayers: 10,
   },
+  {
+    id: "theGang",
+    title: "The Gang",
+    description:
+      "Cooperative Texas Hold'em: rank your hand with chips and pull off three heists.",
+    minPlayers: 3,
+    maxPlayers: 6,
+  },
 ];
 
 export type GameGenre = "drawingGuessing" | "cooperative";
@@ -72,6 +80,7 @@ export const HOME_GAME_GENRE: Record<GameId, GameGenreInfo> = {
   hanabi: { genre: "cooperative", label: "Cooperative" },
   crew: { genre: "cooperative", label: "Cooperative" },
   wavelength: { genre: "drawingGuessing", label: "Party & Guessing" },
+  theGang: { genre: "cooperative", label: "Cooperative" },
 };
 
 /** Home launcher display order (two-column grid: row-major). */
@@ -80,6 +89,7 @@ export const HOME_GAME_ORDER: GameId[] = [
   "telestrations",
   "fakeArtist",
   "wavelength",
+  "theGang",
   "hanabi",
   "crew",
 ];

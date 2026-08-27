@@ -65,6 +65,12 @@ const UX_FLAGS: Record<
     hasEndReview: true,
     hasConventionalScoring: true,
   },
+  theGang: {
+    usesTimer: false,
+    hasGameplayHistory: true,
+    hasEndReview: true,
+    hasConventionalScoring: false,
+  },
 };
 
 /**
@@ -128,6 +134,14 @@ const HOW_TO_PLAY: Record<GameId, GameHowToPlay> = {
     winCondition:
       "Score points for accurate guesses across every player's clue-giving turn.",
   },
+  theGang: {
+    objective:
+      "Pull off three heists before three alarms — without discussing your cards.",
+    turnStructure:
+      "Each heist is a Hold'em hand: choose strength chips at pre-flop, flop, turn, and river.",
+    winCondition:
+      "Open three vaults (successful heists) before three alarms (failed heists).",
+  },
 };
 
 const OFFICIAL_RULEBOOKS: Record<GameId, OfficialRulebook> = {
@@ -154,6 +168,10 @@ const OFFICIAL_RULEBOOKS: Record<GameId, OfficialRulebook> = {
   wavelength: {
     url: "https://www.wavelength.zone/how-to-play",
     label: "Palm Court — Wavelength (how to play)",
+  },
+  theGang: {
+    url: "https://boardgamegeek.com/boardgame/358861/the-gang",
+    label: "BoardGameGeek — The Gang",
   },
 };
 
