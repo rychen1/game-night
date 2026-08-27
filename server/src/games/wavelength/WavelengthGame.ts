@@ -136,6 +136,10 @@ export class WavelengthGame implements Game {
     if (this.isGameOver() || !this.active.has(playerId)) {
       return;
     }
+
+    const removedIndex = this.turnOrder.indexOf(playerId);
+    const wasClueGiver = this.turnOrder[this.roundIndex] === playerId;
+
     this.active.delete(playerId);
     this.turnOrder = this.turnOrder.filter((id) => id !== playerId);
     this.guesses.delete(playerId);
@@ -152,19 +156,24 @@ export class WavelengthGame implements Game {
       return;
     }
 
+    if (removedIndex >= 0 && removedIndex < this.roundIndex) {
+      this.roundIndex -= 1;
+    }
+
     if (this.roundIndex >= this.turnOrder.length) {
       this.phase = "RESULTS";
+      this.clue = null;
+      this.guesses.clear();
       return;
     }
 
-    if (this.currentClueGiver() === playerId) {
-      this.clue = null;
-      this.guesses.clear();
-      if (this.roundIndex >= this.turnOrder.length) {
-        this.phase = "RESULTS";
-        return;
-      }
+    if (wasClueGiver) {
       this.startRound();
+      return;
+    }
+
+    if (this.phase === "GUESSING" && this.allGuessersSubmitted()) {
+      this.completeRound();
     }
   }
 

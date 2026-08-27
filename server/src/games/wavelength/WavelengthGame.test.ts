@@ -5,6 +5,7 @@ import { WavelengthGame } from "./WavelengthGame.ts";
 import {
   asInternals,
   setRoundTarget,
+  setRoundIndex,
   setSpectrum,
   setupFixedOrder,
 } from "./testHelpers.ts";
@@ -12,6 +13,7 @@ import {
 const P1 = "p1";
 const P2 = "p2";
 const P3 = "p3";
+const P4 = "p4";
 
 function clueGiver(game: WavelengthGame): string {
   return game.getPublicState().clueGiverId;
@@ -239,5 +241,75 @@ describe("WavelengthGame replay", () => {
     assert.equal(fresh.history, undefined);
     assert.notEqual(game.getPrivateState(fresh.clueGiverId).target, 10);
     assert.ok(firstScore >= 0);
+  });
+});
+
+describe("WavelengthGame onPlayerRemoved", () => {
+  it("starts a fresh round when the clue-giver leaves during CLUE", () => {
+    const game = new WavelengthGame();
+    setupFixedOrder(game, [P1, P2, P3, P4]);
+    setRoundTarget(game, 42);
+    setSpectrum(game, "Hot", "Cold");
+    const usedBefore = asInternals(game).usedSpectrumIndices.size;
+
+    game.onPlayerRemoved(P1);
+
+    const state = game.getPublicState();
+    assert.equal(state.phase, "CLUE");
+    assert.equal(state.clue, null);
+    assert.equal(state.clueGiverId, P2);
+    assert.ok(game.getPrivateState(P2).target !== undefined);
+    assert.notEqual(asInternals(game).target, 42);
+    assert.equal(asInternals(game).guesses.size, 0);
+    assert.ok(asInternals(game).usedSpectrumIndices.size > usedBefore);
+  });
+
+  it("starts a fresh round when the clue-giver leaves during GUESSING", () => {
+    const game = new WavelengthGame();
+    setupFixedOrder(game, [P1, P2, P3, P4]);
+    setRoundTarget(game, 55);
+    setSpectrum(game, "Loud", "Quiet");
+    submitClue(game, "Boom");
+    game.performAction(P2, { type: "submit_spectrum_guess", position: 40 });
+
+    game.onPlayerRemoved(P1);
+
+    const state = game.getPublicState();
+    assert.equal(state.phase, "CLUE");
+    assert.equal(state.clue, null);
+    assert.equal(state.clueGiverId, P2);
+    assert.notEqual(asInternals(game).target, 55);
+    assert.equal(asInternals(game).guesses.size, 0);
+    assert.notEqual(asInternals(game).leftLabel, "Loud");
+    assert.notEqual(asInternals(game).rightLabel, "Quiet");
+  });
+
+  it("preserves the current clue-giver turn when an earlier player leaves", () => {
+    const game = new WavelengthGame();
+    setupFixedOrder(game, [P1, P2, P3, P4]);
+    submitClue(game);
+    submitAllGuesses(game);
+    assert.equal(clueGiver(game), P2);
+
+    game.onPlayerRemoved(P1);
+
+    assert.equal(game.getPublicState().phase, "CLUE");
+    assert.equal(clueGiver(game), P2);
+    assert.equal(asInternals(game).roundIndex, 0);
+    assert.equal(game.getPublicState().totalRounds, 3);
+  });
+
+  it("does not end early when roundIndex would exceed the shortened turn order", () => {
+    const game = new WavelengthGame();
+    setupFixedOrder(game, [P1, P2, P3, P4]);
+    setRoundIndex(game, 3);
+    assert.equal(clueGiver(game), P4);
+
+    game.onPlayerRemoved(P1);
+
+    assert.notEqual(game.getPublicState().phase, "RESULTS");
+    assert.equal(clueGiver(game), P4);
+    assert.equal(asInternals(game).roundIndex, 2);
+    assert.equal(game.getPublicState().totalRounds, 3);
   });
 });

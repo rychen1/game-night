@@ -41,3 +41,7 @@ export function setSpectrum(
   asInternals(game).leftLabel = leftLabel;
   asInternals(game).rightLabel = rightLabel;
 }
+
+export function setRoundIndex(game: WavelengthGame, roundIndex: number): void {
+  asInternals(game).roundIndex = roundIndex;
+}

@@ -151,6 +151,9 @@ export class TheGangGame implements Game {
       return;
     }
     this.rebuildChipCenter();
+    if (this.allPlayersHoldChip()) {
+      this.maybeAdvancePhase();
+    }
   }
 
   isGameOver(): boolean {
@@ -348,6 +351,12 @@ export class TheGangGame implements Game {
   }
 
   private rebuildChipCenter(): void {
+    const maxStar = this.playerOrder.length;
+    for (const [playerId, star] of [...this.chipHeld.entries()]) {
+      if (star > maxStar) {
+        this.chipHeld.delete(playerId);
+      }
+    }
     const heldStars = new Set(this.chipHeld.values());
     this.chipCenter = this.starValues().filter((star) => !heldStars.has(star));
   }

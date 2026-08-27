@@ -14,6 +14,9 @@ import {
 const P1 = "p1";
 const P2 = "p2";
 const P3 = "p3";
+const P4 = "p4";
+const P5 = "p5";
+const P6 = "p6";
 
 describe("TheGangGame setup", () => {
   it("requires 3–6 players", () => {
@@ -253,5 +256,41 @@ describe("TheGangGame hidden information", () => {
     const p2View = game.getPrivateState(P2).holeCards;
     assert.deepEqual(p2View, [card(2, "clubs"), card(3, "diamonds")]);
     assert.notDeepEqual(p2View, [card(14, "spades"), card(14, "hearts")]);
+  });
+});
+
+describe("TheGangGame onPlayerRemoved", () => {
+  it("advances the phase when the last chipless player leaves", () => {
+    const game = new TheGangGame();
+    setupFixedOrder(game, [P1, P2, P3, P4]);
+    game.performAction(P1, { type: "gang_take_center", star: 1 });
+    game.performAction(P2, { type: "gang_take_center", star: 2 });
+    game.performAction(P3, { type: "gang_take_center", star: 3 });
+
+    game.onPlayerRemoved(P4);
+
+    const pub = game.getPublicState();
+    assert.equal(pub.phase, "FLOP");
+    assert.equal(pub.chipColor, "yellow");
+    assert.equal(pub.communityCards.length, 3);
+    assert.equal(pub.chipHeld.length, 0);
+  });
+
+  it("reclaims star values above the remaining player count", () => {
+    const game = new TheGangGame();
+    setupFixedOrder(game, [P1, P2, P3, P4, P5, P6]);
+    game.performAction(P1, { type: "gang_take_center", star: 6 });
+    assert.deepEqual(
+      game.getPublicState().chipHeld,
+      [{ playerId: P1, star: 6 }],
+    );
+
+    game.onPlayerRemoved(P6);
+
+    const pub = game.getPublicState();
+    assert.equal(pub.chipHeld.some((entry) => entry.playerId === P1), false);
+    assert.equal(pub.chipCenter.includes(6), false);
+    assert.deepEqual(pub.chipCenter, [1, 2, 3, 4, 5]);
+    assert.equal(pub.playerCount, 5);
   });
 });
