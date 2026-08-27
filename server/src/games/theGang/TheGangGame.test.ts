@@ -6,6 +6,7 @@ import {
   asInternals,
   assignChips,
   card,
+  setActiveModifiers,
   setCommunity,
   setHoleCards,
   setupFixedOrder,
@@ -91,16 +92,42 @@ describe("TheGangGame strength actions", () => {
     assert.ok(game.getPublicState().chipCenter.includes(1));
   });
 
-  it("rejects duplicate claims on the same position", () => {
+  it("steals a strength position from another player", () => {
     const game = new TheGangGame();
     setupFixedOrder(game, [P1, P2, P3]);
     game.performAction(P1, { type: "gang_claim_strength", star: 3 });
-    assert.throws(
-      () => game.performAction(P2, { type: "gang_claim_strength", star: 3 }),
-      (error: unknown) =>
-        error instanceof GameError &&
-        error.message === "That strength position is already claimed",
-    );
+    game.performAction(P2, { type: "gang_claim_strength", star: 3 });
+
+    const pub = game.getPublicState();
+    assert.deepEqual(pub.chipHeld, [{ playerId: P2, star: 3 }]);
+    assert.ok(pub.chipCenter.includes(1));
+    assert.ok(pub.chipCenter.includes(2));
+  });
+
+  it("returns the thief's old position to the center when stealing", () => {
+    const game = new TheGangGame();
+    setupFixedOrder(game, [P1, P2, P3]);
+    game.performAction(P1, { type: "gang_claim_strength", star: 1 });
+    game.performAction(P2, { type: "gang_claim_strength", star: 3 });
+    game.performAction(P1, { type: "gang_claim_strength", star: 3 });
+
+    const pub = game.getPublicState();
+    assert.deepEqual(pub.chipHeld, [{ playerId: P1, star: 3 }]);
+    assert.ok(pub.chipCenter.includes(1));
+    assert.ok(pub.chipCenter.includes(2));
+  });
+
+  it("does not advance the phase when a steal leaves a player without a position", () => {
+    const game = new TheGangGame();
+    setupFixedOrder(game, [P1, P2, P3]);
+    game.performAction(P1, { type: "gang_claim_strength", star: 1 });
+    game.performAction(P2, { type: "gang_claim_strength", star: 2 });
+    game.performAction(P1, { type: "gang_claim_strength", star: 2 });
+
+    const pub = game.getPublicState();
+    assert.equal(pub.phase, "PREFLOP");
+    assert.deepEqual(pub.chipHeld, [{ playerId: P1, star: 2 }]);
+    assert.deepEqual(pub.chipCenter.sort(), [1, 3]);
   });
 
   it("advances only when every player has claimed a strength", () => {
@@ -331,5 +358,306 @@ describe("TheGangGame onPlayerRemoved", () => {
     assert.equal(pub.chipHeld.length, 0);
     assert.ok(pub.chipCenter.includes(2));
     assert.equal(pub.phase, "PREFLOP");
+  });
+});
+
+describe("TheGangGame modes and modifiers", () => {
+  it("exposes mode and alarm limit in public state", () => {
+    const game = new TheGangGame("masterThief");
+    setupFixedOrder(game, [P1, P2, P3]);
+    const pub = game.getPublicState();
+    assert.equal(pub.mode, "masterThief");
+    assert.equal(pub.alarmsToLose, 2);
+    assert.equal(pub.activeModifiers.length, 2);
+    assert.ok(pub.activeModifiers.every((modifier) => !modifier.permanent));
+    assert.deepEqual(
+      pub.activeModifiers.map((modifier) => modifier.id).sort(),
+      ["motionDetector", "noiseSensors"],
+    );
+  });
+
+  it("starts with no modifiers in basic mode", () => {
+    const game = new TheGangGame("basic");
+    setupFixedOrder(game, [P1, P2, P3]);
+    assert.equal(game.getPublicState().activeModifiers.length, 0);
+  });
+
+  it("adds a permanent challenge in professional mode", () => {
+    const game = new TheGangGame("professional");
+    setupFixedOrder(game, [P1, P2, P3]);
+    const pub = game.getPublicState();
+    assert.equal(pub.activeModifiers.length, 1);
+    assert.equal(pub.activeModifiers[0]?.kind, "challenge");
+    assert.equal(pub.activeModifiers[0]?.permanent, true);
+    assert.equal(pub.activeModifiers[0]?.id, "noiseSensors");
+  });
+
+  it("keeps the permanent challenge and adds a rotating one after success in professional mode", () => {
+    const game = new TheGangGame("professional");
+    setupFixedOrder(game, [P1, P2, P3]);
+    setHoleCards(game, P1, [card(2, "clubs"), card(3, "diamonds")]);
+    setHoleCards(game, P2, [card(10, "clubs"), card(10, "diamonds")]);
+    setHoleCards(game, P3, [card(14, "spades"), card(14, "hearts")]);
+    setCommunity(game, [
+      card(2, "spades"),
+      card(5, "hearts"),
+      card(9, "clubs"),
+      card(11, "diamonds"),
+      card(13, "spades"),
+    ]);
+    asInternals(game).phase = "RIVER";
+    asInternals(game).chipColor = "red";
+    assignChips(game, { [P1]: 1, [P2]: 2, [P3]: 3 });
+    game.advancePhaseForTests();
+
+    const pub = game.getPublicState();
+    assert.equal(pub.heistNumber, 2);
+    assert.equal(pub.activeModifiers.length, 2);
+    assert.equal(pub.activeModifiers[0]?.id, "noiseSensors");
+    assert.equal(pub.activeModifiers[0]?.permanent, true);
+    assert.equal(pub.activeModifiers[1]?.kind, "challenge");
+    assert.equal(pub.activeModifiers[1]?.id, "motionDetector");
+    assert.equal(pub.activeModifiers[1]?.permanent, undefined);
+  });
+
+  it("keeps the permanent challenge and adds a specialist after failure in professional mode", () => {
+    const game = new TheGangGame("professional");
+    setupFixedOrder(game, [P1, P2, P3]);
+    setHoleCards(game, P1, [card(14, "spades"), card(14, "hearts")]);
+    setHoleCards(game, P2, [card(10, "clubs"), card(10, "diamonds")]);
+    setHoleCards(game, P3, [card(2, "clubs"), card(3, "diamonds")]);
+    setCommunity(game, [
+      card(2, "spades"),
+      card(5, "hearts"),
+      card(9, "clubs"),
+      card(11, "diamonds"),
+      card(13, "spades"),
+    ]);
+    asInternals(game).phase = "RIVER";
+    asInternals(game).chipColor = "red";
+    assignChips(game, { [P1]: 1, [P2]: 2, [P3]: 3 });
+    game.advancePhaseForTests();
+
+    const pub = game.getPublicState();
+    assert.equal(pub.alarms, 1);
+    assert.equal(pub.activeModifiers.length, 2);
+    assert.equal(pub.activeModifiers[0]?.id, "noiseSensors");
+    assert.equal(pub.activeModifiers[0]?.permanent, true);
+    assert.equal(pub.activeModifiers[1]?.kind, "specialist");
+    assert.equal(pub.activeModifiers[1]?.id, "informant");
+  });
+
+  it("rotates challenges between heists in master thief mode", () => {
+    const game = new TheGangGame("masterThief");
+    setupFixedOrder(game, [P1, P2, P3]);
+    setHoleCards(game, P1, [card(2, "clubs"), card(3, "diamonds")]);
+    setHoleCards(game, P2, [card(10, "clubs"), card(10, "diamonds")]);
+    setHoleCards(game, P3, [card(14, "spades"), card(14, "hearts")]);
+    setCommunity(game, [
+      card(2, "spades"),
+      card(5, "hearts"),
+      card(9, "clubs"),
+      card(11, "diamonds"),
+      card(13, "spades"),
+    ]);
+    asInternals(game).phase = "RIVER";
+    asInternals(game).chipColor = "red";
+    assignChips(game, { [P1]: 1, [P2]: 2, [P3]: 3 });
+    game.advancePhaseForTests();
+
+    const pub = game.getPublicState();
+    assert.equal(pub.heistNumber, 2);
+    assert.equal(pub.activeModifiers.length, 2);
+    assert.deepEqual(
+      pub.activeModifiers.map((modifier) => modifier.id).sort(),
+      ["motionDetector", "retinaScan"],
+    );
+  });
+
+  it("does not add a third challenge after success in master thief mode", () => {
+    const game = new TheGangGame("masterThief");
+    setupFixedOrder(game, [P1, P2, P3]);
+    for (let heist = 0; heist < 2; heist += 1) {
+      setHoleCards(game, P1, [card(2, "clubs"), card(3, "diamonds")]);
+      setHoleCards(game, P2, [card(10, "clubs"), card(10, "diamonds")]);
+      setHoleCards(game, P3, [card(14, "spades"), card(14, "hearts")]);
+      setCommunity(game, [
+        card(2, "spades"),
+        card(5, "hearts"),
+        card(9, "clubs"),
+        card(11, "diamonds"),
+        card(13, "spades"),
+      ]);
+      asInternals(game).phase = "RIVER";
+      asInternals(game).chipColor = "red";
+      assignChips(game, { [P1]: 1, [P2]: 2, [P3]: 3 });
+      game.advancePhaseForTests();
+    }
+    assert.equal(game.getPublicState().activeModifiers.length, 2);
+    assert.ok(
+      game.getPublicState().activeModifiers.every((modifier) => modifier.kind === "challenge"),
+    );
+  });
+
+  it("activates a challenge after a successful heist in advanced mode", () => {
+    const game = new TheGangGame("advanced");
+    setupFixedOrder(game, [P1, P2, P3]);
+    setHoleCards(game, P1, [card(2, "clubs"), card(3, "diamonds")]);
+    setHoleCards(game, P2, [card(10, "clubs"), card(10, "diamonds")]);
+    setHoleCards(game, P3, [card(14, "spades"), card(14, "hearts")]);
+    setCommunity(game, [
+      card(2, "spades"),
+      card(5, "hearts"),
+      card(9, "clubs"),
+      card(11, "diamonds"),
+      card(13, "spades"),
+    ]);
+    asInternals(game).phase = "RIVER";
+    asInternals(game).chipColor = "red";
+    assignChips(game, { [P1]: 1, [P2]: 2, [P3]: 3 });
+    game.advancePhaseForTests();
+
+    const pub = game.getPublicState();
+    assert.equal(pub.heistNumber, 2);
+    assert.equal(pub.activeModifiers.length, 1);
+    assert.equal(pub.activeModifiers[0]?.kind, "challenge");
+    assert.equal(pub.activeModifiers[0]?.id, "quickAccess");
+  });
+
+  it("activates a specialist after a failed heist in advanced mode", () => {
+    const game = new TheGangGame("advanced");
+    setupFixedOrder(game, [P1, P2, P3]);
+    setHoleCards(game, P1, [card(14, "spades"), card(14, "hearts")]);
+    setHoleCards(game, P2, [card(10, "clubs"), card(10, "diamonds")]);
+    setHoleCards(game, P3, [card(2, "clubs"), card(3, "diamonds")]);
+    setCommunity(game, [
+      card(2, "spades"),
+      card(5, "hearts"),
+      card(9, "clubs"),
+      card(11, "diamonds"),
+      card(13, "spades"),
+    ]);
+    asInternals(game).phase = "RIVER";
+    asInternals(game).chipColor = "red";
+    assignChips(game, { [P1]: 1, [P2]: 2, [P3]: 3 });
+    game.advancePhaseForTests();
+
+    const pub = game.getPublicState();
+    assert.equal(pub.alarms, 1);
+    assert.equal(pub.activeModifiers.length, 1);
+    assert.equal(pub.activeModifiers[0]?.kind, "specialist");
+    assert.equal(pub.activeModifiers[0]?.id, "informant");
+  });
+
+  it("ends the game after two alarms in master thief mode", () => {
+    const game = new TheGangGame("masterThief");
+    setupFixedOrder(game, [P1, P2, P3]);
+    for (let heist = 0; heist < 2; heist += 1) {
+      setHoleCards(game, P1, [card(14, "spades"), card(14, "hearts")]);
+      setHoleCards(game, P2, [card(10, "clubs"), card(10, "diamonds")]);
+      setHoleCards(game, P3, [card(2, "clubs"), card(3, "diamonds")]);
+      setCommunity(game, [
+        card(2, "spades"),
+        card(5, "hearts"),
+        card(9, "clubs"),
+        card(11, "diamonds"),
+        card(13, "spades"),
+      ]);
+      asInternals(game).phase = "RIVER";
+      asInternals(game).chipColor = "red";
+      assignChips(game, { [P1]: 1, [P2]: 2, [P3]: 3 });
+      game.advancePhaseForTests();
+      while (game.getPublicState().phase === "SHOWDOWN_GATE") {
+        game.advancePhaseForTests();
+      }
+    }
+    const pub = game.getPublicState();
+    assert.equal(pub.phase, "RESULTS");
+    assert.equal(pub.endReason, "lost");
+    assert.equal(pub.alarms, 2);
+  });
+
+  it("skips the turn street when Hasty Getaway is active", () => {
+    const game = new TheGangGame("advanced");
+    setupFixedOrder(game, [P1, P2, P3]);
+    setActiveModifiers(game, [{ kind: "challenge", id: "hastyGetaway" }]);
+
+    const claimRound = (stars: number[]) => {
+      stars.forEach((star, index) => {
+        game.performAction([P1, P2, P3][index]!, {
+          type: "gang_claim_strength",
+          star,
+        });
+      });
+    };
+
+    claimRound([1, 2, 3]);
+    assert.equal(game.getPublicState().phase, "FLOP");
+    assert.equal(game.getPublicState().communityCards.length, 3);
+
+    claimRound([1, 2, 3]);
+    const pub = game.getPublicState();
+    assert.equal(pub.phase, "RIVER");
+    assert.equal(pub.chipColor, "red");
+    assert.equal(pub.communityCards.length, 4);
+    assert.equal(pub.chipHistory.length, 2);
+    assert.equal(pub.chipHistory.some((entry) => entry.color === "orange"), false);
+  });
+
+  it("skips pre-flop when Quick Access is active", () => {
+    const game = new TheGangGame("advanced");
+    setupFixedOrder(game, [P1, P2, P3]);
+    setActiveModifiers(game, [{ kind: "challenge", id: "quickAccess" }]);
+    game.startHeistForTests();
+
+    const pub = game.getPublicState();
+    assert.equal(pub.phase, "FLOP");
+    assert.equal(pub.chipColor, "yellow");
+    assert.equal(pub.communityCards.length, 3);
+  });
+
+  it("deals three hole cards with Security Cameras", () => {
+    const game = new TheGangGame("advanced");
+    setupFixedOrder(game, [P1, P2, P3]);
+    setActiveModifiers(game, [{ kind: "challenge", id: "securityCameras" }]);
+    game.startHeistForTests();
+
+    assert.equal(game.getPrivateState(P1).holeCards.length, 3);
+  });
+
+  it("locks the 1-star chip under Noise Sensors", () => {
+    const game = new TheGangGame("advanced");
+    setupFixedOrder(game, [P1, P2, P3]);
+    setActiveModifiers(game, [{ kind: "challenge", id: "noiseSensors" }]);
+    game.startHeistForTests();
+    game.performAction(P1, { type: "gang_claim_strength", star: 1 });
+    assert.throws(
+      () => game.performAction(P2, { type: "gang_claim_strength", star: 1 }),
+      (error: unknown) =>
+        error instanceof GameError &&
+        error.message === "That strength position is locked",
+    );
+  });
+
+  it("enters modifier setup after a failed heist with a specialist", () => {
+    const game = new TheGangGame("advanced");
+    setupFixedOrder(game, [P1, P2, P3]);
+    setHoleCards(game, P1, [card(14, "spades"), card(14, "hearts")]);
+    setHoleCards(game, P2, [card(10, "clubs"), card(10, "diamonds")]);
+    setHoleCards(game, P3, [card(2, "clubs"), card(3, "diamonds")]);
+    setCommunity(game, [
+      card(2, "spades"),
+      card(5, "hearts"),
+      card(9, "clubs"),
+      card(11, "diamonds"),
+      card(13, "spades"),
+    ]);
+    asInternals(game).phase = "RIVER";
+    asInternals(game).chipColor = "red";
+    assignChips(game, { [P1]: 1, [P2]: 2, [P3]: 3 });
+    game.advancePhaseForTests();
+
+    assert.equal(game.getPublicState().phase, "MODIFIER_SETUP");
+    assert.equal(game.getPublicState().specialistSetup?.specialistId, "informant");
   });
 });

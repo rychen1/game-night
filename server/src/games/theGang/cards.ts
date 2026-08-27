@@ -3,12 +3,21 @@ export type GangSuit = "clubs" | "diamonds" | "hearts" | "spades";
 export type GangRank = 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14;
 
 export type GangCard = {
-  suit: GangSuit;
   rank: GangRank;
+  suit?: GangSuit;
+  jackSpecialist?: boolean;
 };
 
 const SUITS: GangSuit[] = ["clubs", "diamonds", "hearts", "spades"];
 const RANKS: GangRank[] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+
+export function isJackSpecialist(card: GangCard): boolean {
+  return card.jackSpecialist === true;
+}
+
+export function createJackSpecialistCard(): GangCard {
+  return { rank: 11, jackSpecialist: true };
+}
 
 export function createDeck(): GangCard[] {
   const deck: GangCard[] = [];
@@ -21,7 +30,7 @@ export function createDeck(): GangCard[] {
 }
 
 export function shuffleDeck(deck: GangCard[]): GangCard[] {
-  const next = [...deck];
+  const next = deck.map(cloneCard);
   for (let i = next.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
     const a = next[i];
@@ -36,11 +45,17 @@ export function shuffleDeck(deck: GangCard[]): GangCard[] {
 }
 
 export function cardKey(card: GangCard): string {
+  if (isJackSpecialist(card)) {
+    return "jack-specialist";
+  }
   return `${card.rank}-${card.suit}`;
 }
 
 export function cloneCard(card: GangCard): GangCard {
-  return { suit: card.suit, rank: card.rank };
+  if (isJackSpecialist(card)) {
+    return createJackSpecialistCard();
+  }
+  return { suit: card.suit!, rank: card.rank };
 }
 
 export function cloneCards(cards: GangCard[]): GangCard[] {
@@ -76,5 +91,8 @@ export function suitSymbol(suit: GangSuit): string {
 }
 
 export function cardLabel(card: GangCard): string {
-  return `${rankLabel(card.rank)}${suitSymbol(card.suit)}`;
+  if (isJackSpecialist(card)) {
+    return "J*";
+  }
+  return `${rankLabel(card.rank)}${suitSymbol(card.suit!)}`;
 }

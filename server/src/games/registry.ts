@@ -83,12 +83,32 @@ const GAMES: Record<GameId, GameMeta> = {
       "Cooperative Texas Hold'em: rank your hand with chips and pull off three heists.",
     minPlayers: 3,
     maxPlayers: 6,
-    fields: [],
-    create: () => new TheGangGame(),
+    fields: [
+      {
+        key: "mode",
+        type: "select",
+        label: "Mode",
+        options: [
+          { value: "basic", label: "Basic" },
+          { value: "advanced", label: "Advanced" },
+          { value: "professional", label: "Professional" },
+          { value: "masterThief", label: "Master Thief" },
+        ],
+      },
+    ],
+    create: (settings) => {
+      if (settings.kind !== "theGang") {
+        throw new Error("Invalid settings for The Gang");
+      }
+      return new TheGangGame(settings.mode);
+    },
   },
 };
 
 export function defaultSettings(gameId: GameId): GameSettings {
+  if (gameId === "theGang") {
+    return { kind: "theGang", mode: "basic" };
+  }
   return { kind: gameId };
 }
 

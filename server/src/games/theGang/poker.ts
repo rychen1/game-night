@@ -1,4 +1,5 @@
 import type { GangCard, GangRank } from "./cards.ts";
+import { isJackSpecialist } from "./cards.ts";
 
 export type HandCategory =
   | "high_card"
@@ -9,7 +10,8 @@ export type HandCategory =
   | "flush"
   | "full_house"
   | "four_kind"
-  | "straight_flush";
+  | "straight_flush"
+  | "royal_flush";
 
 const CATEGORY_ORDER: Record<HandCategory, number> = {
   high_card: 0,
@@ -21,6 +23,7 @@ const CATEGORY_ORDER: Record<HandCategory, number> = {
   full_house: 6,
   four_kind: 7,
   straight_flush: 8,
+  royal_flush: 9,
 };
 
 export type EvaluatedHand = {
@@ -50,29 +53,48 @@ export function compareEvaluatedHands(a: EvaluatedHand, b: EvaluatedHand): numbe
   return 0;
 }
 
-export function evaluateSeven(cards: GangCard[]): EvaluatedHand {
-  if (cards.length !== 7) {
-    throw new Error("Expected 7 cards");
+export function compareForShowdown(
+  a: EvaluatedHand,
+  b: EvaluatedHand,
+  playerA: string,
+  playerB: string,
+  musclePlayerId: string | null,
+): number {
+  const base = compareEvaluatedHands(a, b);
+  if (base !== 0) {
+    return base;
+  }
+  if (musclePlayerId === playerA) {
+    return 1;
+  }
+  if (musclePlayerId === playerB) {
+    return -1;
+  }
+  return 0;
+}
+
+function combinations<T>(items: T[], choose: number): T[][] {
+  if (choose === 0) {
+    return [[]];
+  }
+  if (items.length < choose) {
+    return [];
+  }
+  const [first, ...rest] = items;
+  const withFirst = combinations(rest, choose - 1).map((combo) => [first!, ...combo]);
+  const withoutFirst = combinations(rest, choose);
+  return [...withFirst, ...withoutFirst];
+}
+
+export function evaluateBest(cards: GangCard[]): EvaluatedHand {
+  if (cards.length < 5) {
+    throw new Error("Need at least 5 cards");
   }
   let best: EvaluatedHand | null = null;
-  for (let a = 0; a < 3; a += 1) {
-    for (let b = a + 1; b < 4; b += 1) {
-      for (let c = b + 1; c < 5; c += 1) {
-        for (let d = c + 1; d < 6; d += 1) {
-          for (let e = d + 1; e < 7; e += 1) {
-            const hand = evaluateFive([
-              cards[a]!,
-              cards[b]!,
-              cards[c]!,
-              cards[d]!,
-              cards[e]!,
-            ]);
-            if (!best || compareEvaluatedHands(hand, best) > 0) {
-              best = hand;
-            }
-          }
-        }
-      }
+  for (const combo of combinations(cards, 5)) {
+    const hand = evaluateFive(combo);
+    if (!best || compareEvaluatedHands(hand, best) > 0) {
+      best = hand;
     }
   }
   if (!best) {
@@ -83,14 +105,17 @@ export function evaluateSeven(cards: GangCard[]): EvaluatedHand {
 
 export function evaluateFive(cards: GangCard[]): EvaluatedHand {
   const ranks = cards.map((card) => card.rank).sort((a, b) => b - a);
-  const suits = cards.map((card) => card.suit);
-  const isFlush = suits.every((suit) => suit === suits[0]);
+  const suitedCards = cards.filter((card) => !isJackSpecialist(card));
+  const isFlush =
+    suitedCards.length === 5 &&
+    suitedCards.every((card) => card.suit === suitedCards[0]!.suit);
   const straightHigh = straightHighRank(ranks);
   const rankCounts = countRanks(ranks);
 
   if (isFlush && straightHigh !== null) {
+    const category = isRoyalFlush(ranks) ? "royal_flush" : "straight_flush";
     return {
-      category: "straight_flush",
+      category,
       ranks: [straightHigh],
     };
   }
@@ -145,20 +170,11 @@ export function bestFiveCards(hole: GangCard[], community: GangCard[]): GangCard
   const all = [...hole, ...community];
   let bestHand: EvaluatedHand | null = null;
   let bestCards: GangCard[] = [];
-  for (let a = 0; a < 3; a += 1) {
-    for (let b = a + 1; b < 4; b += 1) {
-      for (let c = b + 1; c < 5; c += 1) {
-        for (let d = c + 1; d < 6; d += 1) {
-          for (let e = d + 1; e < 7; e += 1) {
-            const combo = [all[a]!, all[b]!, all[c]!, all[d]!, all[e]!];
-            const evaluated = evaluateFive(combo);
-            if (!bestHand || compareEvaluatedHands(evaluated, bestHand) > 0) {
-              bestHand = evaluated;
-              bestCards = combo;
-            }
-          }
-        }
-      }
+  for (const combo of combinations(all, 5)) {
+    const evaluated = evaluateFive(combo);
+    if (!bestHand || compareEvaluatedHands(evaluated, bestHand) > 0) {
+      bestHand = evaluated;
+      bestCards = combo;
     }
   }
   return bestCards;
@@ -184,7 +200,17 @@ export function handLabel(hand: EvaluatedHand): string {
       return `Four of a kind ${rankNamePlural(hand.ranks[0] as GangRank)}`;
     case "straight_flush":
       return `Straight flush to ${rankName(hand.ranks[0] as GangRank)}`;
+    case "royal_flush":
+      return "Royal flush";
   }
+}
+
+function isRoyalFlush(ranks: number[]): boolean {
+  const needed = new Set([10, 11, 12, 13, 14]);
+  for (const rank of ranks) {
+    needed.delete(rank);
+  }
+  return needed.size === 0;
 }
 
 function countRanks(ranks: number[]): Map<number, number> {
@@ -275,5 +301,34 @@ export function toHandView(hole: GangCard[], community: GangCard[]): GangHandVie
 }
 
 export function handStrength(hole: GangCard[], community: GangCard[]): EvaluatedHand {
-  return evaluateSeven([...hole, ...community]);
+  return evaluateBest([...hole, ...community]);
+}
+
+export function pocketContainsRank(hole: GangCard[], rank: GangRank): boolean {
+  return hole.some((card) => card.rank === rank);
+}
+
+export function countFaceCards(hole: GangCard[]): number {
+  return hole.filter((card) => card.rank >= 11 && card.rank <= 13).length;
+}
+
+export function mathWhizSum(hole: GangCard[]): number {
+  return hole.reduce((total, card) => {
+    if (card.rank >= 11 && card.rank <= 13) {
+      return total + 10;
+    }
+    if (card.rank === 14) {
+      return total + 11;
+    }
+    return total + card.rank;
+  }, 0);
+}
+
+export function countRankInHole(hole: GangCard[], rank: GangRank): number {
+  return hole.filter((card) => card.rank === rank).length;
+}
+
+/** @deprecated Use evaluateBest / handStrength with variable hole counts. */
+export function evaluateSeven(cards: GangCard[]): EvaluatedHand {
+  return evaluateBest(cards);
 }

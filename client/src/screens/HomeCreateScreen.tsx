@@ -1,6 +1,7 @@
 import type { GameId, RoomVisibility } from "../network/messages.ts";
 import { ActionFeedback } from "../components/ActionFeedback.tsx";
 import { GameInfo } from "../components/GameInfo.tsx";
+import { configurationForGameId } from "../games/theGang/setup.ts";
 import { RoomVisibilityFields } from "../components/RoomVisibilityFields.tsx";
 import { SectionPanel } from "../components/SectionPanel.tsx";
 
@@ -54,7 +55,7 @@ export function HomeCreateScreen({
             showPlayerRange
             showHowToPlay
             showConfiguration
-            configuration={{ label: "Standard" }}
+            configuration={configurationForGameId(gameId)}
           />
         </SectionPanel>
 

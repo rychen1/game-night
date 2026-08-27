@@ -1,4 +1,5 @@
 import type { GangCard, GangChipColor, GangPhase } from "../../protocol/messages.ts";
+import type { GangActiveModifier } from "./modifiers.ts";
 import { TheGangGame } from "./TheGangGame.ts";
 
 type TheGangGameInternals = {
@@ -13,6 +14,8 @@ type TheGangGameInternals = {
   heistNumber: number;
   vaultsOpened: number;
   alarms: number;
+  activeModifiers: GangActiveModifier[];
+  challengeDrawIndex: number;
 };
 
 export function asInternals(game: TheGangGame): TheGangGameInternals {
@@ -59,6 +62,26 @@ export function completeAllPhasesToRiver(
     assignChips(game, chipPlan[color]);
     game.advancePhaseForTests();
   }
+}
+
+export function setActiveModifiers(
+  game: TheGangGame,
+  modifiers: GangActiveModifier[],
+): void {
+  asInternals(game).activeModifiers = modifiers.map((modifier) => ({ ...modifier }));
+}
+
+export function setRotatingSpecialist(
+  game: TheGangGame,
+  specialistId: GangActiveModifier["id"],
+): void {
+  asInternals(game).activeModifiers = [
+    { kind: "specialist", id: specialistId },
+  ];
+}
+
+export function setChallengeDrawIndex(game: TheGangGame, index: number): void {
+  asInternals(game).challengeDrawIndex = index;
 }
 
 export function card(

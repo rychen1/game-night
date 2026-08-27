@@ -436,6 +436,9 @@ function App() {
           onNameChange={handleNameChange}
           onSetName={() => send({ type: "set_name", name: name.trim() })}
           onSelectGame={(gameId) => send({ type: "select_game", gameId })}
+          onUpdateGameSettings={(settings) =>
+            send({ type: "update_game_settings", settings })
+          }
           onCancelSetup={() => send({ type: "cancel_game_setup" })}
           onStartGame={() => send({ type: "start_game" })}
           onSetReady={(ready) => send({ type: "set_ready", ready })}

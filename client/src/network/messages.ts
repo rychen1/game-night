@@ -17,7 +17,9 @@ export type PictionarySettings = { kind: "pictionary" };
 export type HanabiSettings = { kind: "hanabi" };
 export type CrewSettings = { kind: "crew" };
 export type WavelengthSettings = { kind: "wavelength" };
-export type TheGangSettings = { kind: "theGang" };
+export type GangMode = "basic" | "advanced" | "professional" | "masterThief";
+
+export type TheGangSettings = { kind: "theGang"; mode: GangMode };
 export type GameSettings =
   | FakeArtistSettings
   | TelestrationsSettings
@@ -419,8 +421,9 @@ export type GangSuit = "clubs" | "diamonds" | "hearts" | "spades";
 export type GangRank = 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14;
 
 export type GangCard = {
-  suit: GangSuit;
   rank: GangRank;
+  suit?: GangSuit;
+  jackSpecialist?: boolean;
 };
 
 export type GangHandCategory =
@@ -432,7 +435,8 @@ export type GangHandCategory =
   | "flush"
   | "full_house"
   | "four_kind"
-  | "straight_flush";
+  | "straight_flush"
+  | "royal_flush";
 
 export type GangHandView = {
   category: GangHandCategory;
@@ -441,10 +445,12 @@ export type GangHandView = {
 };
 
 export type GangPhase =
+  | "MODIFIER_SETUP"
   | "PREFLOP"
   | "FLOP"
   | "TURN"
   | "RIVER"
+  | "SHOWDOWN_GATE"
   | "SHOWDOWN"
   | "RESULTS"
   | "ABORTED";
@@ -475,8 +481,39 @@ export type GangHeistResult = {
   alarms: number;
 };
 
+export type GangModifierView = {
+  kind: "challenge" | "specialist";
+  id: string;
+  name: string;
+  description: string;
+  permanent?: boolean;
+};
+
+export type GangSpecialistDeclaration = {
+  playerId: string;
+  label: string;
+};
+
+export type GangSpecialistSetup = {
+  specialistId: string;
+  assigneeId?: string;
+  pendingPlayerIds: string[];
+  declarations: GangSpecialistDeclaration[];
+};
+
+export type GangShowdownGate = {
+  kind: "retinaScan" | "fingerprintScan";
+  targetPlayerId: string;
+  submittedPlayerIds: string[];
+  agreedRank?: GangRank;
+  agreedCategory?: GangHandCategory;
+};
+
 export type GangPublicState = {
   kind: "theGang";
+  mode: GangMode;
+  alarmsToLose: number;
+  activeModifiers: GangModifierView[];
   phase: GangPhase;
   heistNumber: number;
   vaultsOpened: number;
@@ -487,6 +524,10 @@ export type GangPublicState = {
   chipHeld: GangChipSelection[];
   chipCenter: number[];
   chipHistory: GangChipSnapshot[];
+  lockedStars: number[];
+  musclePlayerId?: string;
+  specialistSetup?: GangSpecialistSetup;
+  showdownGate?: GangShowdownGate;
   lastHeist?: GangHeistResult;
   history?: GangHeistResult[];
   endReason?: "won" | "lost";
@@ -494,12 +535,23 @@ export type GangPublicState = {
 
 export type TheGangActionType =
   | "gang_claim_strength"
-  | "gang_release_strength";
+  | "gang_release_strength"
+  | "gang_take_specialist"
+  | "gang_informant"
+  | "gang_discard_hole"
+  | "gang_coordinator_pass"
+  | "gang_declare_face_cards"
+  | "gang_declare_math_sum"
+  | "gang_declare_category"
+  | "gang_declare_rank_count"
+  | "gang_guess_pocket_rank"
+  | "gang_guess_hand_category";
 
 export type GangPrivateState = {
   kind: "theGang";
   holeCards: GangCard[];
   legalActions: TheGangActionType[];
+  informantCard?: GangCard;
 };
 
 export type PublicGameState =
@@ -556,6 +608,45 @@ export type GangClaimStrengthAction = {
   star: number;
 };
 export type GangReleaseStrengthAction = { type: "gang_release_strength" };
+export type GangTakeSpecialistAction = { type: "gang_take_specialist" };
+export type GangInformantAction = {
+  type: "gang_informant";
+  targetPlayerId: string;
+  cardIndex: number;
+};
+export type GangDiscardHoleAction = {
+  type: "gang_discard_hole";
+  cardIndex: number;
+};
+export type GangCoordinatorPassAction = {
+  type: "gang_coordinator_pass";
+  cardIndex: number;
+};
+export type GangDeclareFaceCardsAction = {
+  type: "gang_declare_face_cards";
+  count: number;
+};
+export type GangDeclareMathSumAction = {
+  type: "gang_declare_math_sum";
+  sum: number;
+};
+export type GangDeclareCategoryAction = {
+  type: "gang_declare_category";
+  category: GangHandCategory;
+};
+export type GangDeclareRankCountAction = {
+  type: "gang_declare_rank_count";
+  rank: GangRank;
+  count: number;
+};
+export type GangGuessPocketRankAction = {
+  type: "gang_guess_pocket_rank";
+  rank: GangRank;
+};
+export type GangGuessHandCategoryAction = {
+  type: "gang_guess_hand_category";
+  category: GangHandCategory;
+};
 export type GameAction =
   | SubmitStrokeAction
   | VoteAction
@@ -571,7 +662,17 @@ export type GameAction =
   | SubmitClueAction
   | SubmitSpectrumGuessAction
   | GangClaimStrengthAction
-  | GangReleaseStrengthAction;
+  | GangReleaseStrengthAction
+  | GangTakeSpecialistAction
+  | GangInformantAction
+  | GangDiscardHoleAction
+  | GangCoordinatorPassAction
+  | GangDeclareFaceCardsAction
+  | GangDeclareMathSumAction
+  | GangDeclareCategoryAction
+  | GangDeclareRankCountAction
+  | GangGuessPocketRankAction
+  | GangGuessHandCategoryAction;
 
 export type RoomStatePayload = {
   roomCode: string;

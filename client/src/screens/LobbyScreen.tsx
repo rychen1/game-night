@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type {
   GameId,
+  GameSettings,
   PrivateGameState,
   RoomStatePayload,
 } from "../network/messages.ts";
@@ -21,6 +22,7 @@ type LobbyScreenProps = {
   onNameChange: (name: string) => void;
   onSetName: () => void;
   onSelectGame: (gameId: GameId) => void;
+  onUpdateGameSettings: (settings: GameSettings) => void;
   onCancelSetup: () => void;
   onStartGame: () => void;
   onSetReady: (ready: boolean) => void;
@@ -37,6 +39,7 @@ export function LobbyScreen({
   onNameChange,
   onSetName,
   onSelectGame,
+  onUpdateGameSettings,
   onCancelSetup,
   onStartGame,
   onSetReady,
@@ -85,7 +88,11 @@ export function LobbyScreen({
 
         {inSetup && setup ? (
           <SectionPanel aria-label="Game information">
-            <GameSetupPanel setup={setup} />
+            <GameSetupPanel
+              setup={setup}
+              isHost={isHost}
+              onUpdateSettings={onUpdateGameSettings}
+            />
           </SectionPanel>
         ) : null}
 

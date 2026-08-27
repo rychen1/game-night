@@ -17,11 +17,18 @@ import { WaitingStatus } from "../../components/WaitingStatus.tsx";
 import {
   cardLabel,
   CHIP_COLOR_LABEL,
+  CHIP_COLORS,
   isRedSuit,
   PHASE_LABEL,
   rankLabel,
   suitSymbol,
 } from "./cards.ts";
+import { gangModeLabel } from "./setup.ts";
+import {
+  InformantCardNotice,
+  ShowdownGatePanel,
+  SpecialistSetupPanel,
+} from "./TheGangModifierPanels.tsx";
 
 type TheGangScreenProps = {
   playerId: string;
@@ -49,14 +56,21 @@ function strengthHeldBy(game: GangPublicState, targetId: string): number | null 
 }
 
 function PlayingCard({ card }: { card: GangCard }) {
-  const red = isRedSuit(card.suit);
+  if (card.jackSpecialist) {
+    return (
+      <span className="gang-card" aria-label="Jack specialist">
+        <span className="gang-card__rank">J*</span>
+      </span>
+    );
+  }
+  const red = isRedSuit(card.suit!);
   return (
     <span
       className={`gang-card${red ? " gang-card--red" : ""}`}
       aria-label={cardLabel(card)}
     >
       <span className="gang-card__rank">{rankLabel(card.rank)}</span>
-      <span className="gang-card__suit">{suitSymbol(card.suit)}</span>
+      <span className="gang-card__suit">{suitSymbol(card.suit!)}</span>
     </span>
   );
 }
@@ -64,17 +78,119 @@ function PlayingCard({ card }: { card: GangCard }) {
 function StrengthToken({
   star,
   color,
+  small,
 }: {
   star: number;
   color: GangChipColor;
+  small?: boolean;
 }) {
   return (
     <span
-      className={`gang-chip gang-chip--${color}`}
+      className={`gang-chip gang-chip--${color}${small ? " gang-chip--small" : ""}`}
       aria-label={`Strength ${star}`}
     >
       {"★".repeat(star)}
     </span>
+  );
+}
+
+function starForPlayerAtColor(
+  game: GangPublicState,
+  playerId: string,
+  color: GangChipColor,
+  isChipPhase: boolean,
+): number | null {
+  const snapshot = game.chipHistory.find((entry) => entry.color === color);
+  if (snapshot) {
+    const held = snapshot.held.find((entry) => entry.playerId === playerId);
+    if (held) {
+      return held.star;
+    }
+  }
+  if (isChipPhase && color === game.chipColor) {
+    return strengthHeldBy(game, playerId);
+  }
+  return null;
+}
+
+function PlayerChipRows({
+  game,
+  players,
+  playerId,
+  isChipPhase,
+}: {
+  game: GangPublicState;
+  players: PublicPlayer[];
+  playerId: string;
+  isChipPhase: boolean;
+}) {
+  return (
+    <div className="gang-chip-rows" aria-label="Player strength by street">
+      <h3 className="gang-chip-rows__title">Player chips</h3>
+      <div className="gang-chip-rows__grid" role="table">
+        <div className="gang-chip-rows__header" role="row">
+          <span className="gang-chip-rows__name-col" role="columnheader">
+            Player
+          </span>
+          {CHIP_COLORS.map((color) => (
+            <span
+              key={color}
+              className={`gang-chip-rows__header-cell${
+                isChipPhase && color === game.chipColor
+                  ? " gang-chip-rows__header-cell--current"
+                  : ""
+              }`}
+              role="columnheader"
+            >
+              {CHIP_COLOR_LABEL[color]}
+            </span>
+          ))}
+        </div>
+        {players.map((player) => (
+          <div
+            key={player.id}
+            className={`gang-chip-rows__row${
+              player.id === playerId ? " gang-chip-rows__row--mine" : ""
+            }`}
+            role="row"
+          >
+            <span className="gang-chip-rows__name" role="rowheader">
+              {player.name}
+              {player.id === playerId ? " (you)" : ""}
+            </span>
+            {CHIP_COLORS.map((color) => {
+              const star = starForPlayerAtColor(game, player.id, color, isChipPhase);
+              const isCurrentStreet = isChipPhase && color === game.chipColor;
+              const isLocked =
+                star !== null && isCurrentStreet && game.lockedStars.includes(star);
+
+              return (
+                <div
+                  key={color}
+                  className={`gang-chip-rows__cell${
+                    isCurrentStreet ? " gang-chip-rows__cell--current" : ""
+                  }`}
+                  role="cell"
+                >
+                  {star !== null ? (
+                    <span
+                      className={isLocked ? "gang-chip-rows__token gang-chip-rows__token--locked" : "gang-chip-rows__token"}
+                      title={isLocked ? "Locked position" : undefined}
+                    >
+                      <StrengthToken star={star} color={color} small />
+                    </span>
+                  ) : (
+                    <span className="gang-chip-rows__empty" aria-hidden="true">
+                      —
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -84,6 +200,7 @@ function StrengthBoard({
   playerId,
   canClaim,
   canRelease,
+  lockedStars,
   onGameAction,
 }: {
   game: GangPublicState;
@@ -91,6 +208,7 @@ function StrengthBoard({
   playerId: string;
   canClaim: boolean;
   canRelease: boolean;
+  lockedStars: number[];
   onGameAction: (action: GameAction) => void;
 }) {
   const stars = Array.from({ length: game.playerCount }, (_, index) => index + 1);
@@ -102,12 +220,16 @@ function StrengthBoard({
         const isMine = holderId === playerId;
         const isClaimed = holderId !== null;
 
+        const isLocked = lockedStars.includes(star);
+
         return (
           <div
             key={star}
             className={`gang-strength-slot${
               isClaimed ? " gang-strength-slot--claimed" : " gang-strength-slot--unclaimed"
-            }${isMine ? " gang-strength-slot--mine" : ""}`}
+            }${isMine ? " gang-strength-slot--mine" : ""}${
+              isLocked ? " gang-strength-slot--locked" : ""
+            }`}
             role="listitem"
           >
             {!isClaimed ? (
@@ -131,6 +253,17 @@ function StrengthBoard({
               >
                 <StrengthToken star={star} color={game.chipColor} />
               </button>
+            ) : !isMine && isClaimed && canClaim && !isLocked ? (
+              <button
+                type="button"
+                className="gang-strength-slot__claim gang-strength-slot__claim--steal"
+                onClick={() => onGameAction({ type: "gang_claim_strength", star })}
+                aria-label={`Steal strength ${star} from ${playerName(players, holderId!)}`}
+                title={`Steal from ${playerName(players, holderId!)}`}
+              >
+                <StrengthToken star={star} color={game.chipColor} />
+                <span className="gang-strength-slot__hint">Steal</span>
+              </button>
             ) : (
               <StrengthToken star={star} color={game.chipColor} />
             )}
@@ -143,6 +276,16 @@ function StrengthBoard({
                   title="Click to release your claim"
                 >
                   {playerName(players, holderId)}
+                </button>
+              ) : !isMine && canClaim ? (
+                <button
+                  type="button"
+                  className="gang-strength-slot__name gang-strength-slot__name--steal"
+                  disabled={!canClaim}
+                  onClick={() => onGameAction({ type: "gang_claim_strength", star })}
+                  title={`Steal from ${playerName(players, holderId!)}`}
+                >
+                  {playerName(players, holderId!)}
                 </button>
               ) : (
                 <span className="gang-strength-slot__name">
@@ -159,6 +302,33 @@ function StrengthBoard({
         );
       })}
     </div>
+  );
+}
+
+function ActiveModifiers({
+  modifiers,
+}: {
+  modifiers: GangPublicState["activeModifiers"];
+}) {
+  if (modifiers.length === 0) {
+    return null;
+  }
+
+  return (
+    <ul className="gang-modifiers" aria-label="Active modifiers">
+      {modifiers.map((modifier) => (
+        <li key={`${modifier.kind}-${modifier.id}`} className="gang-modifier">
+          <span
+            className={`gang-modifier__badge gang-modifier__badge--${modifier.kind}`}
+          >
+            {modifier.kind === "challenge" ? "Challenge" : "Specialist"}
+            {modifier.permanent ? " (permanent)" : ""}
+          </span>
+          <strong className="gang-modifier__name">{modifier.name}</strong>
+          <p className="gang-modifier__description">{modifier.description}</p>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -220,6 +390,8 @@ export function TheGangScreen({
     game.phase === "FLOP" ||
     game.phase === "TURN" ||
     game.phase === "RIVER";
+  const isModifierSetup = game.phase === "MODIFIER_SETUP";
+  const isShowdownGate = game.phase === "SHOWDOWN_GATE";
   const legal = privateState?.legalActions ?? [];
   const myStrength = strengthHeldBy(game, playerId);
   const canClaim = legal.includes("gang_claim_strength");
@@ -227,6 +399,8 @@ export function TheGangScreen({
   const waitingPlayers = room.players.filter(
     (player) => strengthHeldBy(game, player.id) === null,
   );
+  const showChipRows =
+    isChipPhase || isShowdownGate || (game.chipHistory.length > 0 && !isModifierSetup);
 
   return (
     <main className="page">
@@ -239,7 +413,7 @@ export function TheGangScreen({
               ? " — victory"
               : " — defeat"
             : " — aborted"
-          : ` — heist ${game.heistNumber}`}
+          : ` — heist ${game.heistNumber} (${gangModeLabel(game.mode)})`}
       </p>
 
       <div className="game-stack game-stack--wide">
@@ -269,20 +443,53 @@ export function TheGangScreen({
                 <div className="gang-scoreboard__track">
                   <span className="gang-scoreboard__label">Alarms</span>
                   <div className="gang-scoreboard__dots">
-                    {[1, 2, 3].map((slot) => (
-                      <span
-                        key={`alarm-${slot}`}
-                        className={`gang-scoreboard__dot gang-scoreboard__dot--alarm${
-                          game.alarms >= slot ? " gang-scoreboard__dot--filled" : ""
-                        }`}
-                        aria-hidden="true"
-                      />
-                    ))}
+                    {Array.from({ length: game.alarmsToLose }, (_, index) => index + 1).map(
+                      (slot) => (
+                        <span
+                          key={`alarm-${slot}`}
+                          className={`gang-scoreboard__dot gang-scoreboard__dot--alarm${
+                            game.alarms >= slot ? " gang-scoreboard__dot--filled" : ""
+                          }`}
+                          aria-hidden="true"
+                        />
+                      ),
+                    )}
                   </div>
-                  <span className="gang-scoreboard__count">{game.alarms}/3</span>
+                  <span className="gang-scoreboard__count">
+                    {game.alarms}/{game.alarmsToLose}
+                  </span>
                 </div>
               </div>
             </SectionPanel>
+
+            {game.activeModifiers.length > 0 ? (
+              <SectionPanel aria-label="Active modifiers">
+                <h2 className="gang-section-title">Active cards</h2>
+                <ActiveModifiers modifiers={game.activeModifiers} />
+              </SectionPanel>
+            ) : null}
+
+            <InformantCardNotice privateState={privateState} />
+
+            {isModifierSetup ? (
+              <SpecialistSetupPanel
+                game={game}
+                privateState={privateState}
+                players={room.players}
+                playerId={playerId}
+                onGameAction={onGameAction}
+              />
+            ) : null}
+
+            {isShowdownGate ? (
+              <ShowdownGatePanel
+                game={game}
+                privateState={privateState}
+                players={room.players}
+                playerId={playerId}
+                onGameAction={onGameAction}
+              />
+            ) : null}
 
             <SectionPanel aria-label="Your cards">
               <h2 className="gang-section-title">Your hole cards</h2>
@@ -309,6 +516,17 @@ export function TheGangScreen({
               </div>
             </SectionPanel>
 
+            {showChipRows ? (
+              <SectionPanel aria-label="Player chips">
+                <PlayerChipRows
+                  game={game}
+                  players={room.players}
+                  playerId={playerId}
+                  isChipPhase={isChipPhase}
+                />
+              </SectionPanel>
+            ) : null}
+
             {isChipPhase ? (
               <SectionPanel aria-label="Strength selection" emphasis>
                 <h2 className="gang-section-title">
@@ -316,8 +534,8 @@ export function TheGangScreen({
                 </h2>
                 <p className="status">
                   Positions run weakest (1★) to strongest ({game.playerCount}★), left to
-                  right. Click an open position to claim it, or click your name to release
-                  your claim. Everyone must claim before the next street.
+                  right. Claim an open position, steal from another player, or click your
+                  name to release. Everyone must hold a position before the next street.
                 </p>
 
                 <StrengthBoard
@@ -326,6 +544,7 @@ export function TheGangScreen({
                   playerId={playerId}
                   canClaim={canClaim}
                   canRelease={canRelease}
+                  lockedStars={game.lockedStars}
                   onGameAction={onGameAction}
                 />
 

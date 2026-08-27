@@ -33,14 +33,19 @@ export function isRedSuit(suit: GangSuit): boolean {
 }
 
 export function cardLabel(card: GangCard): string {
-  return `${rankLabel(card.rank)}${suitSymbol(card.suit)}`;
+  if (card.jackSpecialist) {
+    return "J*";
+  }
+  return `${rankLabel(card.rank)}${suitSymbol(card.suit!)}`;
 }
 
 export const PHASE_LABEL: Record<string, string> = {
+  MODIFIER_SETUP: "Specialist setup",
   PREFLOP: "Pre-flop",
   FLOP: "Flop",
   TURN: "Turn",
   RIVER: "River",
+  SHOWDOWN_GATE: "Showdown check",
   SHOWDOWN: "Showdown",
   RESULTS: "Results",
   ABORTED: "Aborted",
@@ -52,3 +57,5 @@ export const CHIP_COLOR_LABEL: Record<string, string> = {
   orange: "Turn",
   red: "River",
 };
+
+export const CHIP_COLORS = ["white", "yellow", "orange", "red"] as const;

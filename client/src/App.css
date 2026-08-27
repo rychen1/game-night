@@ -3431,6 +3431,87 @@ button.hanabi-card {
   margin-top: 12px;
 }
 
+.gang-chip-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gang-chip-rows__title {
+  margin: 0;
+  font-size: var(--type-meta);
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.gang-chip-rows__grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-x: auto;
+}
+
+.gang-chip-rows__header,
+.gang-chip-rows__row {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 1.4fr) repeat(4, minmax(2.75rem, 1fr));
+  gap: 6px 8px;
+  align-items: center;
+  min-width: min(100%, 22rem);
+}
+
+.gang-chip-rows__header {
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.gang-chip-rows__header-cell--current {
+  color: var(--accent);
+}
+
+.gang-chip-rows__row {
+  padding: 4px 0;
+}
+
+.gang-chip-rows__row--mine {
+  font-weight: 600;
+}
+
+.gang-chip-rows__name,
+.gang-chip-rows__name-col {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--type-meta);
+}
+
+.gang-chip-rows__cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 1.6rem;
+}
+
+.gang-chip-rows__cell--current {
+  background: var(--surface-hover, rgba(0, 0, 0, 0.04));
+  border-radius: 6px;
+}
+
+.gang-chip-rows__empty {
+  color: var(--text-muted);
+  opacity: 0.45;
+  font-size: 0.85rem;
+}
+
+.gang-chip-rows__token--locked .gang-chip {
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
 .gang-strength-slot {
   display: flex;
   flex-direction: column;
@@ -3514,23 +3595,154 @@ button.hanabi-card {
   color: var(--text-h);
 }
 
+.gang-strength-slot__claim--steal:hover:not(:disabled) {
+  background: rgba(200, 80, 60, 0.08);
+}
+
+.gang-strength-slot__name--steal {
+  padding: 2px 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-style: dotted;
+}
+
+.gang-strength-slot__name--steal:hover:not(:disabled) {
+  color: var(--text-h);
+}
+
+.gang-strength-slot__name--steal:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  text-decoration: none;
+}
+
+.game-setup-fields {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.game-setup-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.game-setup-field__label {
+  font-size: var(--type-meta);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.game-setup-field__control {
+  width: 100%;
+  max-width: 18rem;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.gang-modifiers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.gang-modifier {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.gang-modifier__badge {
+  display: inline-block;
+  width: fit-content;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.gang-modifier__badge--challenge {
+  background: rgba(180, 70, 50, 0.15);
+  color: #b44632;
+}
+
+.gang-modifier__badge--specialist {
+  background: rgba(40, 120, 80, 0.15);
+  color: #287850;
+}
+
+.gang-modifier__name {
+  font-size: var(--type-body);
+}
+
+.gang-modifier__description {
+  margin: 0;
+  font-size: var(--type-meta);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.gang-strength-slot--locked {
+  opacity: 0.85;
+  border-color: var(--text-muted);
+}
+
+.gang-setup-declarations {
+  margin: 0 0 12px;
+  padding-left: 1.2rem;
+}
+
+.gang-setup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.gang-setup-actions--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+}
+
+.gang-modifier-card-btn {
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
 .gang-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 2.5rem;
-  padding: 6px 10px;
+  min-width: 2rem;
+  padding: 4px 7px;
   border-radius: 999px;
-  font-size: 0.85rem;
-  letter-spacing: -1px;
-  border: 2px solid var(--border);
+  font-size: 0.72rem;
+  letter-spacing: -0.5px;
+  border: 1.5px solid var(--border);
   font-weight: 600;
 }
 
 .gang-chip--small {
   min-width: auto;
-  padding: 2px 6px;
-  font-size: 0.75rem;
+  padding: 1px 5px;
+  font-size: 0.65rem;
 }
 
 .gang-chip--white {

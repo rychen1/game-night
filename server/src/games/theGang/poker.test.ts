@@ -100,6 +100,26 @@ describe("The Gang poker evaluation", () => {
         card(3, "diamonds"),
       ],
     );
-    assert.equal(strength.category, "straight_flush");
+    assert.equal(strength.category, "royal_flush");
+  });
+
+  it("detects royal flushes above other straight flushes", () => {
+    const royal = evaluateFive([
+      card(14, "spades"),
+      card(13, "spades"),
+      card(12, "spades"),
+      card(11, "spades"),
+      card(10, "spades"),
+    ]);
+    const kingHigh = evaluateFive([
+      card(13, "hearts"),
+      card(12, "hearts"),
+      card(11, "hearts"),
+      card(10, "hearts"),
+      card(9, "hearts"),
+    ]);
+    assert.equal(royal.category, "royal_flush");
+    assert.equal(kingHigh.category, "straight_flush");
+    assert.equal(compareEvaluatedHands(royal, kingHigh) > 0, true);
   });
 });
