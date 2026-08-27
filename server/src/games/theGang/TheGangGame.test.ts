@@ -59,7 +59,30 @@ describe("TheGangGame strength actions", () => {
     ]);
   });
 
-  it("releases a strength claim", () => {
+  it("switches to a different unclaimed position atomically", () => {
+    const game = new TheGangGame();
+    setupFixedOrder(game, [P1, P2, P3]);
+    game.performAction(P1, { type: "gang_claim_strength", star: 1 });
+    game.performAction(P1, { type: "gang_claim_strength", star: 3 });
+
+    const pub = game.getPublicState();
+    assert.deepEqual(pub.chipHeld, [{ playerId: P1, star: 3 }]);
+    assert.ok(pub.chipCenter.includes(1));
+    assert.equal(pub.chipCenter.includes(3), false);
+    assert.equal(asInternals(game).chipHeld.size, 1);
+  });
+
+  it("releases a claim when the holder claims their current position again", () => {
+    const game = new TheGangGame();
+    setupFixedOrder(game, [P1, P2, P3]);
+    game.performAction(P1, { type: "gang_claim_strength", star: 2 });
+    game.performAction(P1, { type: "gang_claim_strength", star: 2 });
+
+    assert.equal(game.getPublicState().chipHeld.length, 0);
+    assert.ok(game.getPublicState().chipCenter.includes(2));
+  });
+
+  it("releases a strength claim via gang_release_strength", () => {
     const game = new TheGangGame();
     setupFixedOrder(game, [P1, P2, P3]);
     game.performAction(P1, { type: "gang_claim_strength", star: 1 });
@@ -77,18 +100,6 @@ describe("TheGangGame strength actions", () => {
       (error: unknown) =>
         error instanceof GameError &&
         error.message === "That strength position is already claimed",
-    );
-  });
-
-  it("prevents claiming a second position without releasing first", () => {
-    const game = new TheGangGame();
-    setupFixedOrder(game, [P1, P2, P3]);
-    game.performAction(P1, { type: "gang_claim_strength", star: 1 });
-    assert.throws(
-      () => game.performAction(P1, { type: "gang_claim_strength", star: 2 }),
-      (error: unknown) =>
-        error instanceof GameError &&
-        error.message === "Release your strength claim before choosing another",
     );
   });
 

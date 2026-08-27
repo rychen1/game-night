@@ -121,6 +121,16 @@ function StrengthBoard({
                 <StrengthToken star={star} color={game.chipColor} />
                 <span className="gang-strength-slot__hint">Claim</span>
               </button>
+            ) : isMine && canRelease ? (
+              <button
+                type="button"
+                className="gang-strength-slot__claim"
+                onClick={() => onGameAction({ type: "gang_claim_strength", star })}
+                aria-label={`Release strength ${star}`}
+                title="Click to release your claim"
+              >
+                <StrengthToken star={star} color={game.chipColor} />
+              </button>
             ) : (
               <StrengthToken star={star} color={game.chipColor} />
             )}

@@ -214,11 +214,13 @@ export class TheGangGame implements Game {
   }
 
   private claimStrength(playerId: string, star: number): void {
-    if (this.chipHeld.has(playerId)) {
-      throw new GameError("Release your strength claim before choosing another");
-    }
     if (!this.isValidStar(star)) {
       throw new GameError("That strength position is not valid");
+    }
+    const currentStar = this.chipHeld.get(playerId);
+    if (currentStar === star) {
+      this.chipHeld.delete(playerId);
+      return;
     }
     if (this.holderOfStar(star) !== null) {
       throw new GameError("That strength position is already claimed");
@@ -356,13 +358,14 @@ export class TheGangGame implements Game {
     if (!PHASE_SEQUENCE.includes(this.phase)) {
       return [];
     }
+    const actions: TheGangActionType[] = [];
     if (this.chipHeld.has(playerId)) {
-      return ["gang_release_strength"];
+      actions.push("gang_release_strength");
     }
-    if (this.unclaimedStars().length > 0) {
-      return ["gang_claim_strength"];
+    if (this.unclaimedStars().length > 0 || this.chipHeld.has(playerId)) {
+      actions.push("gang_claim_strength");
     }
-    return [];
+    return actions;
   }
 
   private cloneHeistResult(heist: GangHeistResult): GangHeistResult {
