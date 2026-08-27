@@ -10,7 +10,6 @@ type TheGangGameInternals = {
   communityCards: GangCard[];
   chipColor: GangChipColor;
   chipHeld: Map<string, number>;
-  chipCenter: number[];
   heistNumber: number;
   vaultsOpened: number;
   alarms: number;
@@ -43,10 +42,6 @@ export function assignChips(
 ): void {
   const internal = asInternals(game);
   internal.chipHeld = new Map(Object.entries(held));
-  const stars = Array.from({ length: internal.playerOrder.length }, (_, i) => i + 1);
-  internal.chipCenter = stars.filter(
-    (star) => !Object.values(held).includes(star),
-  );
 }
 
 export function setPhase(game: TheGangGame, phase: GangPhase, chipColor: GangChipColor): void {

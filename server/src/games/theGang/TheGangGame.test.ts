@@ -40,50 +40,65 @@ describe("TheGangGame setup", () => {
   });
 });
 
-describe("TheGangGame chip actions", () => {
-  it("takes a chip from the center", () => {
+describe("TheGangGame strength actions", () => {
+  it("claims an unclaimed strength position", () => {
     const game = new TheGangGame();
     setupFixedOrder(game, [P1, P2, P3]);
-    game.performAction(P1, { type: "gang_take_center", star: 2 });
+    game.performAction(P1, { type: "gang_claim_strength", star: 2 });
     assert.deepEqual(game.getPublicState().chipHeld, [{ playerId: P1, star: 2 }]);
   });
 
-  it("returns a chip to the center", () => {
+  it("exposes strength claims sorted by star ascending", () => {
     const game = new TheGangGame();
     setupFixedOrder(game, [P1, P2, P3]);
-    game.performAction(P1, { type: "gang_take_center", star: 1 });
-    game.performAction(P1, { type: "gang_return_chip" });
+    game.performAction(P1, { type: "gang_claim_strength", star: 3 });
+    game.performAction(P2, { type: "gang_claim_strength", star: 1 });
+    assert.deepEqual(game.getPublicState().chipHeld, [
+      { playerId: P2, star: 1 },
+      { playerId: P1, star: 3 },
+    ]);
+  });
+
+  it("releases a strength claim", () => {
+    const game = new TheGangGame();
+    setupFixedOrder(game, [P1, P2, P3]);
+    game.performAction(P1, { type: "gang_claim_strength", star: 1 });
+    game.performAction(P1, { type: "gang_release_strength" });
     assert.equal(game.getPublicState().chipHeld.length, 0);
     assert.ok(game.getPublicState().chipCenter.includes(1));
   });
 
-  it("takes a chip from another player", () => {
+  it("rejects duplicate claims on the same position", () => {
     const game = new TheGangGame();
     setupFixedOrder(game, [P1, P2, P3]);
-    game.performAction(P1, { type: "gang_take_center", star: 3 });
-    game.performAction(P2, { type: "gang_take_from_player", fromPlayerId: P1 });
-    assert.deepEqual(game.getPublicState().chipHeld, [{ playerId: P2, star: 3 }]);
-  });
-
-  it("prevents holding two chips of the same color", () => {
-    const game = new TheGangGame();
-    setupFixedOrder(game, [P1, P2, P3]);
-    game.performAction(P1, { type: "gang_take_center", star: 1 });
+    game.performAction(P1, { type: "gang_claim_strength", star: 3 });
     assert.throws(
-      () => game.performAction(P1, { type: "gang_take_center", star: 2 }),
+      () => game.performAction(P2, { type: "gang_claim_strength", star: 3 }),
       (error: unknown) =>
         error instanceof GameError &&
-        error.message === "Return your current chip before taking another",
+        error.message === "That strength position is already claimed",
     );
   });
 
-  it("advances only when every player holds a chip", () => {
+  it("prevents claiming a second position without releasing first", () => {
     const game = new TheGangGame();
     setupFixedOrder(game, [P1, P2, P3]);
-    game.performAction(P1, { type: "gang_take_center", star: 1 });
+    game.performAction(P1, { type: "gang_claim_strength", star: 1 });
+    assert.throws(
+      () => game.performAction(P1, { type: "gang_claim_strength", star: 2 }),
+      (error: unknown) =>
+        error instanceof GameError &&
+        error.message === "Release your strength claim before choosing another",
+    );
+  });
+
+  it("advances only when every player has claimed a strength", () => {
+    const game = new TheGangGame();
+    setupFixedOrder(game, [P1, P2, P3]);
+    game.performAction(P1, { type: "gang_claim_strength", star: 1 });
     assert.equal(game.getPublicState().phase, "PREFLOP");
-    game.performAction(P2, { type: "gang_take_center", star: 2 });
-    game.performAction(P3, { type: "gang_take_center", star: 3 });
+    game.performAction(P2, { type: "gang_claim_strength", star: 2 });
+    game.performAction(P3, { type: "gang_claim_strength", star: 3 });
     assert.equal(game.getPublicState().phase, "FLOP");
     assert.equal(game.getPublicState().chipColor, "yellow");
     assert.equal(game.getPublicState().communityCards.length, 3);
@@ -92,21 +107,21 @@ describe("TheGangGame chip actions", () => {
   it("reveals community cards through flop, turn, and river", () => {
     const game = new TheGangGame();
     setupFixedOrder(game, [P1, P2, P3]);
-    const takeRound = (stars: number[]) => {
+    const claimRound = (stars: number[]) => {
       stars.forEach((star, index) => {
         game.performAction([P1, P2, P3][index]!, {
-          type: "gang_take_center",
+          type: "gang_claim_strength",
           star,
         });
       });
     };
-    takeRound([1, 2, 3]);
+    claimRound([1, 2, 3]);
     assert.equal(game.getPublicState().communityCards.length, 3);
-    takeRound([1, 2, 3]);
+    claimRound([1, 2, 3]);
     assert.equal(game.getPublicState().communityCards.length, 4);
-    takeRound([1, 2, 3]);
+    claimRound([1, 2, 3]);
     assert.equal(game.getPublicState().communityCards.length, 5);
-    takeRound([1, 2, 3]);
+    claimRound([1, 2, 3]);
     assert.equal(game.getPublicState().phase, "PREFLOP");
     assert.equal(game.getPublicState().heistNumber, 2);
   });
@@ -260,12 +275,12 @@ describe("TheGangGame hidden information", () => {
 });
 
 describe("TheGangGame onPlayerRemoved", () => {
-  it("advances the phase when the last chipless player leaves", () => {
+  it("advances the phase when the last unclaimed player leaves", () => {
     const game = new TheGangGame();
     setupFixedOrder(game, [P1, P2, P3, P4]);
-    game.performAction(P1, { type: "gang_take_center", star: 1 });
-    game.performAction(P2, { type: "gang_take_center", star: 2 });
-    game.performAction(P3, { type: "gang_take_center", star: 3 });
+    game.performAction(P1, { type: "gang_claim_strength", star: 1 });
+    game.performAction(P2, { type: "gang_claim_strength", star: 2 });
+    game.performAction(P3, { type: "gang_claim_strength", star: 3 });
 
     game.onPlayerRemoved(P4);
 
@@ -279,7 +294,7 @@ describe("TheGangGame onPlayerRemoved", () => {
   it("reclaims star values above the remaining player count", () => {
     const game = new TheGangGame();
     setupFixedOrder(game, [P1, P2, P3, P4, P5, P6]);
-    game.performAction(P1, { type: "gang_take_center", star: 6 });
+    game.performAction(P1, { type: "gang_claim_strength", star: 6 });
     assert.deepEqual(
       game.getPublicState().chipHeld,
       [{ playerId: P1, star: 6 }],
@@ -292,5 +307,18 @@ describe("TheGangGame onPlayerRemoved", () => {
     assert.equal(pub.chipCenter.includes(6), false);
     assert.deepEqual(pub.chipCenter, [1, 2, 3, 4, 5]);
     assert.equal(pub.playerCount, 5);
+  });
+
+  it("frees a claimed position when the holder leaves", () => {
+    const game = new TheGangGame();
+    setupFixedOrder(game, [P1, P2, P3, P4]);
+    game.performAction(P1, { type: "gang_claim_strength", star: 2 });
+
+    game.onPlayerRemoved(P1);
+
+    const pub = game.getPublicState();
+    assert.equal(pub.chipHeld.length, 0);
+    assert.ok(pub.chipCenter.includes(2));
+    assert.equal(pub.phase, "PREFLOP");
   });
 });

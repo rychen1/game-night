@@ -9,7 +9,6 @@ import type {
   RoomStatePayload,
 } from "../../network/messages.ts";
 import { ActionFeedback } from "../../components/ActionFeedback.tsx";
-import { GameActionArea } from "../../components/GameActionArea.tsx";
 import { GameOverActions } from "../../components/GameOverActions.tsx";
 import { GameResultsShell } from "../../components/GameResultsShell.tsx";
 import { HowToPlay } from "../../components/HowToPlay.tsx";
@@ -41,7 +40,11 @@ function playerName(players: PublicPlayer[], id: string): string {
   return players.find((player) => player.id === id)?.name ?? "Unknown";
 }
 
-function chipHeldBy(game: GangPublicState, targetId: string): number | null {
+function holderForStar(game: GangPublicState, star: number): string | null {
+  return game.chipHeld.find((entry) => entry.star === star)?.playerId ?? null;
+}
+
+function strengthHeldBy(game: GangPublicState, targetId: string): number | null {
   return game.chipHeld.find((entry) => entry.playerId === targetId)?.star ?? null;
 }
 
@@ -58,22 +61,94 @@ function PlayingCard({ card }: { card: GangCard }) {
   );
 }
 
-function ChipBadge({
+function StrengthToken({
   star,
   color,
-  size = "normal",
 }: {
   star: number;
   color: GangChipColor;
-  size?: "normal" | "small";
 }) {
   return (
     <span
-      className={`gang-chip gang-chip--${color}${size === "small" ? " gang-chip--small" : ""}`}
-      aria-label={`${star} star`}
+      className={`gang-chip gang-chip--${color}`}
+      aria-label={`Strength ${star}`}
     >
       {"★".repeat(star)}
     </span>
+  );
+}
+
+function StrengthBoard({
+  game,
+  players,
+  playerId,
+  canClaim,
+  canRelease,
+  onGameAction,
+}: {
+  game: GangPublicState;
+  players: PublicPlayer[];
+  playerId: string;
+  canClaim: boolean;
+  canRelease: boolean;
+  onGameAction: (action: GameAction) => void;
+}) {
+  const stars = Array.from({ length: game.playerCount }, (_, index) => index + 1);
+
+  return (
+    <div className="gang-strength-board" role="list" aria-label="Strength positions">
+      {stars.map((star) => {
+        const holderId = holderForStar(game, star);
+        const isMine = holderId === playerId;
+        const isClaimed = holderId !== null;
+
+        return (
+          <div
+            key={star}
+            className={`gang-strength-slot${
+              isClaimed ? " gang-strength-slot--claimed" : " gang-strength-slot--unclaimed"
+            }${isMine ? " gang-strength-slot--mine" : ""}`}
+            role="listitem"
+          >
+            {!isClaimed ? (
+              <button
+                type="button"
+                className="gang-strength-slot__claim"
+                disabled={!canClaim}
+                onClick={() => onGameAction({ type: "gang_claim_strength", star })}
+                aria-label={`Claim strength ${star}`}
+              >
+                <StrengthToken star={star} color={game.chipColor} />
+                <span className="gang-strength-slot__hint">Claim</span>
+              </button>
+            ) : (
+              <StrengthToken star={star} color={game.chipColor} />
+            )}
+            {isClaimed ? (
+              isMine && canRelease ? (
+                <button
+                  type="button"
+                  className="gang-strength-slot__name gang-strength-slot__name--release"
+                  onClick={() => onGameAction({ type: "gang_release_strength" })}
+                  title="Click to release your claim"
+                >
+                  {playerName(players, holderId)}
+                </button>
+              ) : (
+                <span className="gang-strength-slot__name">
+                  {playerName(players, holderId!)}
+                  {isMine ? " (you)" : ""}
+                </span>
+              )
+            ) : (
+              <span className="gang-strength-slot__name gang-strength-slot__name--empty">
+                Open
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -95,20 +170,22 @@ function HeistReview({
         )}
       </h3>
       <ol className="gang-review__reveal-list">
-        {heist.reveals.map((reveal) => (
-          <li key={`${heist.heistNumber}-${reveal.playerId}`}>
-            <ChipBadge star={reveal.star} color="red" size="small" />
-            <span className="gang-review__player">
-              {playerName(players, reveal.playerId)}
-            </span>
-            <span className="gang-review__hand">{reveal.hand.label}</span>
-            <span className="gang-review__cards">
-              {reveal.hand.cards.map((card) => (
-                <PlayingCard key={`${card.rank}-${card.suit}`} card={card} />
-              ))}
-            </span>
-          </li>
-        ))}
+        {[...heist.reveals]
+          .sort((a, b) => a.star - b.star)
+          .map((reveal) => (
+            <li key={`${heist.heistNumber}-${reveal.playerId}`}>
+              <StrengthToken star={reveal.star} color="red" />
+              <span className="gang-review__player">
+                {playerName(players, reveal.playerId)}
+              </span>
+              <span className="gang-review__hand">{reveal.hand.label}</span>
+              <span className="gang-review__cards">
+                {reveal.hand.cards.map((card) => (
+                  <PlayingCard key={`${card.rank}-${card.suit}`} card={card} />
+                ))}
+              </span>
+            </li>
+          ))}
       </ol>
     </article>
   );
@@ -134,12 +211,11 @@ export function TheGangScreen({
     game.phase === "TURN" ||
     game.phase === "RIVER";
   const legal = privateState?.legalActions ?? [];
-  const myChip = chipHeldBy(game, playerId);
-  const canTakeCenter = legal.includes("gang_take_center");
-  const canTakeFromPlayer = legal.includes("gang_take_from_player");
-  const canReturn = legal.includes("gang_return_chip");
+  const myStrength = strengthHeldBy(game, playerId);
+  const canClaim = legal.includes("gang_claim_strength");
+  const canRelease = legal.includes("gang_release_strength");
   const waitingPlayers = room.players.filter(
-    (player) => chipHeldBy(game, player.id) === null,
+    (player) => strengthHeldBy(game, player.id) === null,
   );
 
   return (
@@ -224,123 +300,46 @@ export function TheGangScreen({
             </SectionPanel>
 
             {isChipPhase ? (
-              <SectionPanel aria-label="Chip selection" emphasis>
+              <SectionPanel aria-label="Strength selection" emphasis>
                 <h2 className="gang-section-title">
-                  {PHASE_LABEL[game.phase]} — {CHIP_COLOR_LABEL[game.chipColor]} chips
+                  {PHASE_LABEL[game.phase]} — {CHIP_COLOR_LABEL[game.chipColor]} tokens
                 </h2>
                 <p className="status">
-                  Pick one chip for your hand strength (1★ weakest, {game.playerCount}★
-                  strongest). Everyone must choose before the next street.
+                  Positions run weakest (1★) to strongest ({game.playerCount}★), left to
+                  right. Click an open position to claim it, or click your name to release
+                  your claim. Everyone must claim before the next street.
                 </p>
 
-                <div className="gang-chip-board">
-                  <div className="gang-chip-board__center">
-                    <h3 className="gang-chip-board__heading">Center</h3>
-                    <div className="gang-chip-board__chips">
-                      {game.chipCenter.length === 0 ? (
-                        <span className="status">Empty</span>
-                      ) : (
-                        game.chipCenter.map((star) => (
-                          <button
-                            key={`center-${star}`}
-                            type="button"
-                            className="gang-chip-button"
-                            disabled={!canTakeCenter}
-                            onClick={() =>
-                              onGameAction({ type: "gang_take_center", star })
-                            }
-                          >
-                            <ChipBadge star={star} color={game.chipColor} />
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  </div>
+                <StrengthBoard
+                  game={game}
+                  players={room.players}
+                  playerId={playerId}
+                  canClaim={canClaim}
+                  canRelease={canRelease}
+                  onGameAction={onGameAction}
+                />
 
-                  <ul className="gang-chip-board__players">
-                    {room.players.map((player) => {
-                      const star = chipHeldBy(game, player.id);
-                      return (
-                        <li
-                          key={player.id}
-                          className={`gang-chip-board__player${
-                            star === null ? " gang-chip-board__player--waiting" : ""
-                          }`}
-                        >
-                          <span className="gang-chip-board__name">
-                            {player.name}
-                            {player.id === playerId ? " (you)" : ""}
-                          </span>
-                          {star !== null ? (
-                            canTakeFromPlayer && player.id !== playerId ? (
-                              <button
-                                type="button"
-                                className="gang-chip-button"
-                                onClick={() =>
-                                  onGameAction({
-                                    type: "gang_take_from_player",
-                                    fromPlayerId: player.id,
-                                  })
-                                }
-                              >
-                                <ChipBadge star={star} color={game.chipColor} />
-                                <span className="gang-chip-button__hint">Take</span>
-                              </button>
-                            ) : (
-                              <ChipBadge star={star} color={game.chipColor} />
-                            )
-                          ) : (
-                            <span className="gang-chip-board__waiting">Choosing…</span>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-
-                {myChip !== null ? (
-                  <GameActionArea>
-                    <p className="status">
-                      You hold{" "}
-                      <ChipBadge star={myChip} color={game.chipColor} size="small" />.
-                    </p>
-                    {canReturn ? (
-                      <button
-                        type="button"
-                        className="secondary"
-                        onClick={() => onGameAction({ type: "gang_return_chip" })}
-                      >
-                        Return chip to center
-                      </button>
-                    ) : null}
-                  </GameActionArea>
-                ) : canTakeCenter || canTakeFromPlayer ? (
-                  <GameActionArea>
-                    <p className="status">Take a chip from the center or another player.</p>
-                  </GameActionArea>
-                ) : null}
-
-                {myChip !== null && waitingPlayers.length > 0 ? (
+                {myStrength !== null && waitingPlayers.length > 0 ? (
                   <WaitingStatus
                     message={`Waiting for ${waitingPlayers
                       .map((player) => player.name)
-                      .join(", ")} to choose a chip.`}
+                      .join(", ")} to claim a strength.`}
                   />
                 ) : null}
               </SectionPanel>
             ) : null}
 
             {game.chipHistory.length > 0 ? (
-              <SectionPanel aria-label="Chip history">
+              <SectionPanel aria-label="Strength history">
                 <details className="gang-history">
-                  <summary>Chip history ({game.chipHistory.length})</summary>
+                  <summary>Strength history ({game.chipHistory.length})</summary>
                   <ul className="gang-history__list">
                     {game.chipHistory.map((snapshot) => (
                       <li key={snapshot.color}>
                         <strong>{CHIP_COLOR_LABEL[snapshot.color]}</strong>
                         {snapshot.held.map((entry) => (
                           <span key={entry.playerId} className="gang-history__entry">
-                            {playerName(room.players, entry.playerId)}: {entry.star}★
+                            {entry.star}★: {playerName(room.players, entry.playerId)}
                           </span>
                         ))}
                       </li>

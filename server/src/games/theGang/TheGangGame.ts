@@ -41,7 +41,6 @@ export class TheGangGame implements Game {
   private communityCards: GangCard[] = [];
   private chipColor: GangChipColor = "white";
   private chipHeld = new Map<string, number>();
-  private chipCenter: number[] = [];
   private chipHistory: GangChipSnapshot[] = [];
   private heistNumber = 1;
   private vaultsOpened = 0;
@@ -84,10 +83,10 @@ export class TheGangGame implements Game {
       communityCards: cloneCards(this.communityCards),
       chipColor: this.chipColor,
       chipHeld: this.chipHeldEntries(),
-      chipCenter: [...this.chipCenter],
+      chipCenter: this.unclaimedStars(),
       chipHistory: this.chipHistory.map((snapshot) => ({
         color: snapshot.color,
-        held: snapshot.held.map((entry) => ({ ...entry })),
+        held: [...snapshot.held].sort((a, b) => a.star - b.star),
       })),
     };
     if (this.lastHeist) {
@@ -121,17 +120,14 @@ export class TheGangGame implements Game {
       throw new GameError("The game is over");
     }
     if (!PHASE_SEQUENCE.includes(this.phase)) {
-      throw new GameError("Chip actions are not available right now");
+      throw new GameError("Strength actions are not available right now");
     }
     switch (action.type) {
-      case "gang_take_center":
-        this.takeFromCenter(playerId, action.star);
+      case "gang_claim_strength":
+        this.claimStrength(playerId, action.star);
         return;
-      case "gang_take_from_player":
-        this.takeFromPlayer(playerId, action.fromPlayerId);
-        return;
-      case "gang_return_chip":
-        this.returnChip(playerId);
+      case "gang_release_strength":
+        this.releaseStrength(playerId);
         return;
       default:
         throw new GameError("That action is not valid in this game");
@@ -150,7 +146,7 @@ export class TheGangGame implements Game {
       this.phase = "ABORTED";
       return;
     }
-    this.rebuildChipCenter();
+    this.rebuildStrengthClaims();
     if (this.allPlayersHoldChip()) {
       this.maybeAdvancePhase();
     }
@@ -193,52 +189,49 @@ export class TheGangGame implements Game {
 
   private resetChipPhase(): void {
     this.chipHeld.clear();
-    this.chipCenter = this.starValues();
   }
 
   private starValues(): number[] {
     return Array.from({ length: this.playerOrder.length }, (_, index) => index + 1);
   }
 
-  private takeFromCenter(playerId: string, star: number): void {
+  private unclaimedStars(): number[] {
+    const held = new Set(this.chipHeld.values());
+    return this.starValues().filter((star) => !held.has(star));
+  }
+
+  private isValidStar(star: number): boolean {
+    return Number.isInteger(star) && star >= 1 && star <= this.playerOrder.length;
+  }
+
+  private holderOfStar(star: number): string | null {
+    for (const [playerId, heldStar] of this.chipHeld.entries()) {
+      if (heldStar === star) {
+        return playerId;
+      }
+    }
+    return null;
+  }
+
+  private claimStrength(playerId: string, star: number): void {
     if (this.chipHeld.has(playerId)) {
-      throw new GameError("Return your current chip before taking another");
+      throw new GameError("Release your strength claim before choosing another");
     }
-    if (!this.chipCenter.includes(star)) {
-      throw new GameError("That chip is not available in the center");
+    if (!this.isValidStar(star)) {
+      throw new GameError("That strength position is not valid");
     }
-    this.chipCenter = this.chipCenter.filter((value) => value !== star);
+    if (this.holderOfStar(star) !== null) {
+      throw new GameError("That strength position is already claimed");
+    }
     this.chipHeld.set(playerId, star);
     this.maybeAdvancePhase();
   }
 
-  private takeFromPlayer(playerId: string, fromPlayerId: string): void {
-    if (fromPlayerId === playerId) {
-      throw new GameError("You cannot take a chip from yourself");
-    }
-    if (!this.active.has(fromPlayerId)) {
-      throw new GameError("That player is not in the game");
-    }
-    if (this.chipHeld.has(playerId)) {
-      throw new GameError("Return your current chip before taking another");
-    }
-    const star = this.chipHeld.get(fromPlayerId);
-    if (star === undefined) {
-      throw new GameError("That player is not holding a chip");
-    }
-    this.chipHeld.delete(fromPlayerId);
-    this.chipHeld.set(playerId, star);
-    this.maybeAdvancePhase();
-  }
-
-  private returnChip(playerId: string): void {
-    const star = this.chipHeld.get(playerId);
-    if (star === undefined) {
-      throw new GameError("You are not holding a chip");
+  private releaseStrength(playerId: string): void {
+    if (!this.chipHeld.has(playerId)) {
+      throw new GameError("You have not claimed a strength position");
     }
     this.chipHeld.delete(playerId);
-    this.chipCenter.push(star);
-    this.chipCenter.sort((a, b) => a - b);
   }
 
   private maybeAdvancePhase(): void {
@@ -347,39 +340,29 @@ export class TheGangGame implements Game {
   private chipHeldEntries(): GangChipSelection[] {
     return [...this.chipHeld.entries()]
       .map(([playerId, star]) => ({ playerId, star }))
-      .sort((a, b) => a.playerId.localeCompare(b.playerId));
+      .sort((a, b) => a.star - b.star);
   }
 
-  private rebuildChipCenter(): void {
+  private rebuildStrengthClaims(): void {
     const maxStar = this.playerOrder.length;
     for (const [playerId, star] of [...this.chipHeld.entries()]) {
       if (star > maxStar) {
         this.chipHeld.delete(playerId);
       }
     }
-    const heldStars = new Set(this.chipHeld.values());
-    this.chipCenter = this.starValues().filter((star) => !heldStars.has(star));
   }
 
   private legalActions(playerId: string): TheGangActionType[] {
     if (!PHASE_SEQUENCE.includes(this.phase)) {
       return [];
     }
-    const actions: TheGangActionType[] = [];
     if (this.chipHeld.has(playerId)) {
-      actions.push("gang_return_chip");
-    } else {
-      if (this.chipCenter.length > 0) {
-        actions.push("gang_take_center");
-      }
-      for (const [holderId] of this.chipHeld.entries()) {
-        if (holderId !== playerId) {
-          actions.push("gang_take_from_player");
-          break;
-        }
-      }
+      return ["gang_release_strength"];
     }
-    return actions;
+    if (this.unclaimedStars().length > 0) {
+      return ["gang_claim_strength"];
+    }
+    return [];
   }
 
   private cloneHeistResult(heist: GangHeistResult): GangHeistResult {

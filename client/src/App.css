@@ -3423,64 +3423,95 @@ button.hanabi-card {
   font-size: 1rem;
 }
 
-.gang-chip-board {
-  display: grid;
-  gap: 20px;
+.gang-strength-board {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
   margin-top: 12px;
 }
 
-@media (min-width: 640px) {
-  .gang-chip-board {
-    grid-template-columns: 1fr 1.5fr;
-  }
-}
-
-.gang-chip-board__heading {
-  margin: 0 0 8px;
-  font-size: var(--type-meta);
-  font-weight: 600;
-  color: var(--text-h);
-}
-
-.gang-chip-board__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.gang-chip-board__players {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.gang-strength-slot {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-.gang-chip-board__player {
-  display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  gap: 8px;
+  min-width: 4.5rem;
+  padding: 10px 8px;
+  border-radius: 8px;
+  border: 2px solid var(--border);
   background: var(--surface);
 }
 
-.gang-chip-board__player--waiting {
-  opacity: 0.85;
+.gang-strength-slot--unclaimed {
   border-style: dashed;
+  opacity: 0.95;
 }
 
-.gang-chip-board__name {
-  font-weight: 500;
+.gang-strength-slot--claimed {
+  border-style: solid;
 }
 
-.gang-chip-board__waiting {
+.gang-strength-slot--mine {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.gang-strength-slot__claim {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.gang-strength-slot__claim:hover:not(:disabled) {
+  background: var(--surface-hover, rgba(0, 0, 0, 0.05));
+}
+
+.gang-strength-slot__claim:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.gang-strength-slot__hint {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.gang-strength-slot__name {
   font-size: var(--type-meta);
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+  max-width: 5.5rem;
+  word-break: break-word;
+}
+
+.gang-strength-slot__name--empty {
+  font-weight: 400;
   color: var(--text-muted);
   font-style: italic;
+}
+
+.gang-strength-slot__name--release {
+  padding: 2px 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.gang-strength-slot__name--release:hover {
+  color: var(--text-h);
 }
 
 .gang-chip {

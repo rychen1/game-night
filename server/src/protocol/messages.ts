@@ -493,9 +493,8 @@ export type GangPublicState = {
 };
 
 export type TheGangActionType =
-  | "gang_take_center"
-  | "gang_take_from_player"
-  | "gang_return_chip";
+  | "gang_claim_strength"
+  | "gang_release_strength";
 
 export type GangPrivateState = {
   kind: "theGang";
@@ -552,12 +551,11 @@ export type SubmitSpectrumGuessAction = {
   type: "submit_spectrum_guess";
   position: number;
 };
-export type GangTakeCenterAction = { type: "gang_take_center"; star: number };
-export type GangTakeFromPlayerAction = {
-  type: "gang_take_from_player";
-  fromPlayerId: string;
+export type GangClaimStrengthAction = {
+  type: "gang_claim_strength";
+  star: number;
 };
-export type GangReturnChipAction = { type: "gang_return_chip" };
+export type GangReleaseStrengthAction = { type: "gang_release_strength" };
 export type GameAction =
   | SubmitStrokeAction
   | VoteAction
@@ -572,9 +570,8 @@ export type GameAction =
   | CrewCommunicateAction
   | SubmitClueAction
   | SubmitSpectrumGuessAction
-  | GangTakeCenterAction
-  | GangTakeFromPlayerAction
-  | GangReturnChipAction;
+  | GangClaimStrengthAction
+  | GangReleaseStrengthAction;
 
 export type RoomStatePayload = {
   roomCode: string;
@@ -971,23 +968,14 @@ function parseGameAction(value: unknown): GameAction | null {
       }
       return { type: "submit_spectrum_guess", position: action.position };
     }
-    case "gang_take_center": {
+    case "gang_claim_strength": {
       if (typeof action.star !== "number" || !Number.isInteger(action.star)) {
         return null;
       }
-      return { type: "gang_take_center", star: action.star };
+      return { type: "gang_claim_strength", star: action.star };
     }
-    case "gang_take_from_player": {
-      if (
-        typeof action.fromPlayerId !== "string" ||
-        action.fromPlayerId.length === 0
-      ) {
-        return null;
-      }
-      return { type: "gang_take_from_player", fromPlayerId: action.fromPlayerId };
-    }
-    case "gang_return_chip":
-      return { type: "gang_return_chip" };
+    case "gang_release_strength":
+      return { type: "gang_release_strength" };
     default:
       return null;
   }

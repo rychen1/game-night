@@ -493,9 +493,8 @@ export type GangPublicState = {
 };
 
 export type TheGangActionType =
-  | "gang_take_center"
-  | "gang_take_from_player"
-  | "gang_return_chip";
+  | "gang_claim_strength"
+  | "gang_release_strength";
 
 export type GangPrivateState = {
   kind: "theGang";
@@ -552,12 +551,11 @@ export type SubmitSpectrumGuessAction = {
   type: "submit_spectrum_guess";
   position: number;
 };
-export type GangTakeCenterAction = { type: "gang_take_center"; star: number };
-export type GangTakeFromPlayerAction = {
-  type: "gang_take_from_player";
-  fromPlayerId: string;
+export type GangClaimStrengthAction = {
+  type: "gang_claim_strength";
+  star: number;
 };
-export type GangReturnChipAction = { type: "gang_return_chip" };
+export type GangReleaseStrengthAction = { type: "gang_release_strength" };
 export type GameAction =
   | SubmitStrokeAction
   | VoteAction
@@ -572,9 +570,8 @@ export type GameAction =
   | CrewCommunicateAction
   | SubmitClueAction
   | SubmitSpectrumGuessAction
-  | GangTakeCenterAction
-  | GangTakeFromPlayerAction
-  | GangReturnChipAction;
+  | GangClaimStrengthAction
+  | GangReleaseStrengthAction;
 
 export type RoomStatePayload = {
   roomCode: string;
