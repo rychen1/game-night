@@ -347,9 +347,7 @@ function HeistReview({
         )}
       </h3>
       <ol className="gang-review__reveal-list">
-        {[...heist.reveals]
-          .sort((a, b) => a.star - b.star)
-          .map((reveal) => (
+        {heist.reveals.map((reveal) => (
             <li
               key={`${heist.heistNumber}-${reveal.playerId}`}
               className={
@@ -362,11 +360,27 @@ function HeistReview({
               <span className="gang-review__player">
                 {playerName(players, reveal.playerId)}
               </span>
-              <span className="gang-review__hand">{reveal.hand.label}</span>
-              <span className="gang-review__cards">
-                {reveal.hand.cards.map((card) => (
-                  <PlayingCard key={`${card.rank}-${card.suit}`} card={card} />
-                ))}
+              <span className="gang-review__hand-block">
+                <span className="gang-review__hand-label">Starting</span>
+                <span className="gang-review__cards">
+                  {reveal.holeCards.map((card, index) => (
+                    <PlayingCard
+                      key={`hole-${reveal.playerId}-${index}`}
+                      card={card}
+                    />
+                  ))}
+                </span>
+              </span>
+              <span className="gang-review__hand-block">
+                <span className="gang-review__hand-label">{reveal.hand.label}</span>
+                <span className="gang-review__cards">
+                  {reveal.hand.cards.map((card, index) => (
+                    <PlayingCard
+                      key={`final-${reveal.playerId}-${index}`}
+                      card={card}
+                    />
+                  ))}
+                </span>
               </span>
             </li>
           ))}

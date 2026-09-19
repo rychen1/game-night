@@ -4015,6 +4015,18 @@ button.hanabi-card {
   font-size: var(--type-meta);
 }
 
+.gang-review__hand-block {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.gang-review__hand-label {
+  color: var(--text-muted);
+  font-size: var(--type-meta);
+}
+
 .gang-review__cards {
   display: flex;
   flex-wrap: wrap;

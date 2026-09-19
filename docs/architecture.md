@@ -303,6 +303,13 @@ Prototype reconnection (not accounts):
 4. Server restores player identity and connection status
 5. Client receives current `room_state` and, when applicable, `private_state`
 
+The client keeps the socket alive with application `ping` (about every 20s)
+and replaces a dropped socket automatically (short backoff). When the tab
+becomes visible again or the browser reports `online`, a closed socket is
+reopened immediately. Each new open sends `reconnect` if a token is stored.
+The server also sends WebSocket ping frames and terminates sockets that miss
+a pong so dead connections are cleared promptly.
+
 Socket disconnect marks the player disconnected but does **not** remove them
 from the room or abort the game. Explicit `leave_room` does.
 

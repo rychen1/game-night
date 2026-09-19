@@ -10,9 +10,12 @@ import { GameError } from "../games/Game.ts";
 import type { Room } from "../rooms/Room.ts";
 import type { Player } from "../players/Player.ts";
 
+const HEARTBEAT_MS = 30_000;
+
 export class WebSocketManager {
   private playerIdBySocket = new Map<WebSocket, string>();
   private socketByPlayerId = new Map<string, WebSocket>();
+  private alive = new WeakMap<WebSocket, boolean>();
 
   constructor(
     private wss: WebSocketServer,
@@ -24,9 +27,27 @@ export class WebSocketManager {
     this.wss.on("connection", (socket) => {
       this.handleConnection(socket);
     });
+    setInterval(() => {
+      this.heartbeat();
+    }, HEARTBEAT_MS).unref();
+  }
+
+  private heartbeat(): void {
+    for (const socket of this.wss.clients) {
+      if (this.alive.get(socket) === false) {
+        socket.terminate();
+        continue;
+      }
+      this.alive.set(socket, false);
+      socket.ping();
+    }
   }
 
   private handleConnection(socket: WebSocket): void {
+    this.alive.set(socket, true);
+    socket.on("pong", () => {
+      this.alive.set(socket, true);
+    });
     socket.on("message", (raw) => {
       try {
         this.handleMessage(socket, raw.toString());
@@ -38,6 +59,7 @@ export class WebSocketManager {
     });
 
     socket.on("close", () => {
+      this.alive.delete(socket);
       this.handleDisconnect(socket);
     });
   }

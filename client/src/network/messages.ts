@@ -470,6 +470,7 @@ export type GangChipSnapshot = {
 export type GangHeistReveal = {
   playerId: string;
   star: number;
+  holeCards: GangCard[];
   hand: GangHandView;
   rankingCorrect: boolean;
 };

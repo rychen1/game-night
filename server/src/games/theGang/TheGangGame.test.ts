@@ -203,6 +203,22 @@ describe("TheGangGame heists", () => {
     assert.equal(pub.alarms, 0);
     assert.equal(pub.phase, "PREFLOP");
     assert.ok(pub.lastHeist?.reveals.every((reveal) => reveal.rankingCorrect));
+    assert.deepEqual(
+      pub.lastHeist?.reveals.map((reveal) => reveal.playerId),
+      [P3, P2, P1],
+    );
+    assert.deepEqual(pub.lastHeist?.reveals[0]?.holeCards, [
+      card(14, "spades"),
+      card(14, "hearts"),
+    ]);
+    assert.deepEqual(pub.lastHeist?.reveals[1]?.holeCards, [
+      card(10, "clubs"),
+      card(10, "diamonds"),
+    ]);
+    assert.deepEqual(pub.lastHeist?.reveals[2]?.holeCards, [
+      card(2, "clubs"),
+      card(3, "diamonds"),
+    ]);
   });
 
   it("accepts equal hands in showdown ordering", () => {
@@ -223,7 +239,52 @@ describe("TheGangGame heists", () => {
     assignChips(game, { [P1]: 1, [P2]: 2, [P3]: 3 });
     game.advancePhaseForTests();
 
+    const reveals = game.getPublicState().lastHeist?.reveals ?? [];
     assert.equal(game.getPublicState().lastHeist?.success, true);
+    assert.deepEqual(
+      reveals.map((reveal) => reveal.playerId),
+      [P3, P2, P1],
+    );
+    assert.ok(reveals.every((reveal) => reveal.rankingCorrect));
+    assert.deepEqual(reveals[0]?.holeCards, [card(9, "spades"), card(8, "spades")]);
+    assert.deepEqual(reveals[1]?.holeCards, [
+      card(5, "diamonds"),
+      card(6, "diamonds"),
+    ]);
+    assert.deepEqual(reveals[2]?.holeCards, [card(3, "clubs"), card(4, "clubs")]);
+  });
+
+  it("keeps tied hands in chip order and preserves starting hole cards", () => {
+    const game = new TheGangGame();
+    setupFixedOrder(game, [P1, P2, P3]);
+    setHoleCards(game, P1, [card(3, "clubs"), card(4, "clubs")]);
+    setHoleCards(game, P2, [card(3, "diamonds"), card(4, "diamonds")]);
+    setHoleCards(game, P3, [card(3, "spades"), card(4, "spades")]);
+    setCommunity(game, [
+      card(14, "hearts"),
+      card(14, "spades"),
+      card(13, "clubs"),
+      card(13, "diamonds"),
+      card(2, "hearts"),
+    ]);
+    asInternals(game).phase = "RIVER";
+    asInternals(game).chipColor = "red";
+    assignChips(game, { [P1]: 1, [P2]: 2, [P3]: 3 });
+    game.advancePhaseForTests();
+
+    const reveals = game.getPublicState().lastHeist?.reveals ?? [];
+    assert.equal(game.getPublicState().lastHeist?.success, true);
+    assert.deepEqual(
+      reveals.map((reveal) => reveal.playerId),
+      [P1, P2, P3],
+    );
+    assert.ok(reveals.every((reveal) => reveal.rankingCorrect));
+    assert.deepEqual(reveals[0]?.holeCards, [card(3, "clubs"), card(4, "clubs")]);
+    assert.deepEqual(reveals[1]?.holeCards, [
+      card(3, "diamonds"),
+      card(4, "diamonds"),
+    ]);
+    assert.deepEqual(reveals[2]?.holeCards, [card(3, "spades"), card(4, "spades")]);
   });
 
   it("records a failed heist when ordering breaks", () => {
@@ -247,9 +308,16 @@ describe("TheGangGame heists", () => {
     assert.equal(game.getPublicState().lastHeist?.success, false);
     assert.equal(game.getPublicState().vaultsOpened, 0);
     assert.equal(game.getPublicState().alarms, 1);
-    assert.ok(
-      game.getPublicState().lastHeist?.reveals.some((reveal) => !reveal.rankingCorrect),
+    const reveals = game.getPublicState().lastHeist?.reveals ?? [];
+    assert.ok(reveals.some((reveal) => !reveal.rankingCorrect));
+    assert.deepEqual(
+      reveals.map((reveal) => reveal.playerId),
+      [P1, P2, P3],
     );
+    assert.deepEqual(reveals[0]?.holeCards, [
+      card(14, "spades"),
+      card(14, "hearts"),
+    ]);
   });
 
   it("ends the game after 3 vaults", () => {

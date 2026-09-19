@@ -25,6 +25,10 @@ More specific documents override more general ones when they conflict.
 
 - Primary realtime channel: WebSocket JSON messages
 - Connection stays open while the player is in a session
+- The client sends application `{ type: "ping" }` about every 20s while OPEN
+  and opens a replacement socket after an unexpected close
+- The server replies to application `ping` with `pong`, and also sends
+  protocol-level WebSocket ping frames, terminating sockets that miss a pong
 - Express serves HTTP health (`GET /health`) and, when present, the built
   client from `server/public` (static + SPA fallback). Gameplay traffic is
   WebSocket on `/ws`. See
@@ -292,6 +296,8 @@ still validates every action.
 1. `room_created` or `welcome` includes `reconnectToken`
 2. Client persists token
 3. New socket → send `{ "type": "reconnect", "reconnectToken": "…" }`
+   (on first load when a token exists, and again on every automatic
+   replace-on-close open)
 4. Success → `welcome` + current `room_state` (+ `private_state` if in game)
 5. Failure → `error` (client should clear bad token)
 6. `leave_room` → `left_room` with `reason: "left"`; host `remove_player` →

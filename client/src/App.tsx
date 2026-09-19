@@ -77,6 +77,7 @@ function App() {
   const socketRef = useRef<SocketHandle | null>(null);
   const pendingGameIdRef = useRef<GameId | null>(null);
   const reconnectPendingRef = useRef(SESSION_STARTUP.shouldReconnect);
+  const discardedStartupSessionRef = useRef(false);
   const autoJoinAttemptedRef = useRef(false);
   const [connected, setConnected] = useState(false);
   const [socketEverOpened, setSocketEverOpened] = useState(false);
@@ -105,16 +106,17 @@ function App() {
       onOpen() {
         setConnected(true);
         setSocketEverOpened(true);
-        if (SESSION_STARTUP.discardReconnectSession) {
+        if (
+          SESSION_STARTUP.discardReconnectSession &&
+          !discardedStartupSessionRef.current
+        ) {
+          discardedStartupSessionRef.current = true;
           clearReconnectToken();
         }
-        if (SESSION_STARTUP.shouldReconnect) {
-          const token = loadReconnectToken();
-          if (token) {
-            socket.send({ type: "reconnect", reconnectToken: token });
-          } else {
-            reconnectPendingRef.current = false;
-          }
+        const token = loadReconnectToken();
+        if (token) {
+          reconnectPendingRef.current = true;
+          socket.send({ type: "reconnect", reconnectToken: token });
         } else {
           reconnectPendingRef.current = false;
         }

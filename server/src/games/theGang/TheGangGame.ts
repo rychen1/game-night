@@ -45,6 +45,7 @@ import {
   usesSpecialistCards,
 } from "./modifiers.ts";
 import {
+  compareEvaluatedHands,
   compareForShowdown,
   countFaceCards,
   countRankInHole,
@@ -1028,16 +1029,27 @@ export class TheGangGame implements Game {
     const heistResult: GangHeistResult = {
       heistNumber: this.heistNumber,
       success,
-      reveals: reveals.map(({ entry, view }, index) => ({
-        playerId: entry.playerId,
-        star: entry.star,
-        hand: {
-          category: view.category,
-          label: view.label,
-          cards: cloneCards(view.cards),
-        },
-        rankingCorrect: rankingCorrect[index]!,
-      })),
+      reveals: reveals
+        .map(({ entry, view, evaluated }, index) => ({
+          playerId: entry.playerId,
+          star: entry.star,
+          holeCards: cloneCards(this.holeCards[entry.playerId] ?? []),
+          hand: {
+            category: view.category,
+            label: view.label,
+            cards: cloneCards(view.cards),
+          },
+          rankingCorrect: rankingCorrect[index]!,
+          evaluated,
+        }))
+        .sort((a, b) => {
+          const cmp = compareEvaluatedHands(b.evaluated, a.evaluated);
+          if (cmp !== 0) {
+            return cmp;
+          }
+          return a.star - b.star;
+        })
+        .map(({ evaluated: _evaluated, ...reveal }) => reveal),
       vaultsOpened: this.vaultsOpened,
       alarms: this.alarms,
     };
@@ -1181,6 +1193,7 @@ export class TheGangGame implements Game {
       ...heist,
       reveals: heist.reveals.map((reveal) => ({
         ...reveal,
+        holeCards: cloneCards(reveal.holeCards),
         hand: {
           ...reveal.hand,
           cards: cloneCards(reveal.hand.cards),
